@@ -1,3 +1,4 @@
 Flask
-sqlalchemy
+sqlite3
+SQLAlchemy
 python-dotenv
