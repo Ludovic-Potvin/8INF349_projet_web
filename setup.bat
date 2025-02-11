@@ -15,4 +15,4 @@ if not exist .env (
     echo Created .env file.
 )
 
-echo ✅ Setup complete! Run 'venv\Scripts\activate' to activate the environment.
+echo Setup complete! Run 'venv\Scripts\activate' to activate the environment.
