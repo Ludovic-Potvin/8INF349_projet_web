@@ -6,6 +6,7 @@ import urllib.request
 from sqlalchemy.ext.declarative import declarative_base
 from app.models.base import Base
 import json
+from flask import jsonify
 
 # Create engine
 engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
