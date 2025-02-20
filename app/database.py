@@ -6,6 +6,7 @@ import urllib.request
 from sqlalchemy.ext.declarative import declarative_base
 from app.models.base import Base
 import json
+from flask import jsonify
 
 # Create engine
 engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
@@ -54,3 +55,35 @@ def _fetch_inital_data():
     except Exception as e:
         print(f"Error fetching data: {e}")
         return None
+
+#Had some trouble with the convertion of the db result to json
+#Here are the link that I used to fix the problem
+#https://stackoverflow.com/questions/5022066/how-to-serialize-sqlalchemy-result-to-json
+#https://www.geeksforgeeks.org/python-convert-a-list-to-dictionary/
+#https://www.geeksforgeeks.org/how-to-convert-python-dictionary-to-json/
+#https://stackoverflow.com/questions/1545050/python-one-line-for-expression
+#https://www.digitalocean.com/community/tutorials/python-pretty-print-json --> For this I noticed that the "pretty" change will nots be displayed in the brows
+def get_products():
+    db_session = Session()
+    products = db_session.query(Product).all()
+
+    products_list = []
+    for product in products:
+        products_list.append(product.as_dict())
+
+    #This will also work but I don't find it clear enough
+    #products_list = [product.as_dict() for product in products]
+    #for product in products: products_list.append(product.as_dict())
+
+    db_session.close()
+    return products_list
+
+def get_product(product_id):
+    db_session = Session()
+    product = db_session.query(Product).get(product_id)
+
+    if product is None:
+        return None
+
+    db_session.close()
+    return product.as_dict()
