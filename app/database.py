@@ -1,12 +1,10 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from config import Config
-from .models.product import Product
+from .models.products import Product
 import urllib.request
-from sqlalchemy.ext.declarative import declarative_base
 from app.models.base import Base
 import json
-from flask import jsonify
 
 # Create engine
 engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
