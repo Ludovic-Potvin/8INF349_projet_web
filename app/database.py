@@ -54,13 +54,6 @@ def _fetch_inital_data():
         print(f"Error fetching data: {e}")
         return None
 
-#Had some trouble with the convertion of the db result to json
-#Here are the link that I used to fix the problem
-#https://stackoverflow.com/questions/5022066/how-to-serialize-sqlalchemy-result-to-json
-#https://www.geeksforgeeks.org/python-convert-a-list-to-dictionary/
-#https://www.geeksforgeeks.org/how-to-convert-python-dictionary-to-json/
-#https://stackoverflow.com/questions/1545050/python-one-line-for-expression
-#https://www.digitalocean.com/community/tutorials/python-pretty-print-json --> For this I noticed that the "pretty" change will nots be displayed in the brows
 def get_products():
     db_session = Session()
     products = db_session.query(Product).all()
