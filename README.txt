@@ -28,5 +28,5 @@ https:
 
 4. **Launch the app**
 ```bash
-    python run.py
+    python app.py
 ```
