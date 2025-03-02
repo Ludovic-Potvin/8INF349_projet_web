@@ -11,7 +11,7 @@
         },
         "log_file": {
             "class": "logging.FileHandler",
-            "filename": "app.log",
+            "filename": "logs/app.log",
             "mode": "a",
             "formatter": "default"
         }

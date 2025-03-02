@@ -1,6 +1,7 @@
 import json
 
 import logging.config
+import os
 
 from flask import Flask
 
@@ -17,6 +18,10 @@ logger = logging.getLogger(app.config['LOGGER_NAME'])
 def setup_logging():
     """Set up the logger configuration."""
     config_file = app.config['LOGGER_CONFIG_FILE']
+
+    if not os.path.exists(app.config['LOG_DIR']):
+        os.makedirs(app.config['LOG_DIR'])
+
     with open(config_file) as f_in:
         config = json.load(f_in)
     logging.config.dictConfig(config)
