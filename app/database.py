@@ -59,7 +59,8 @@ def _fetch_inital_data():
 def check_product(id, quantity):
     db_session = Session()
     product = db_session.query(Product).get(id)
-    if not product or not product.in_stock : #Product does not have a quantity stored ! Can we buy infinite product when in stock ?
+    if not product or quantity >= product.in_stock :
+        db_session.close()
         return jsonify({
                         "errors" : {
                             "product": {
@@ -68,5 +69,7 @@ def check_product(id, quantity):
                             }
                         }
                     }), 422
-    return jsonify(), 200
     #buying_process(id, quantity)
+    db_session.commit()
+    db_session.close()    
+    return jsonify(), 200    

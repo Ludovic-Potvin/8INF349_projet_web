@@ -24,7 +24,7 @@ def post_order():
                             }
                         }
                     }), 422
-    check_product(data['product']['id'], data['product']['quantity'])
+    return check_product(data['product']['id'], data['product']['quantity'])
 
 if __name__ == '__main__':
     app.run()
