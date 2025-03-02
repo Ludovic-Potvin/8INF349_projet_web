@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from app.models.base import Base
 
 
