@@ -1,9 +1,11 @@
-from app.database import check_product
+from app.database import retrieve_product
 
-def check_availability(product, id, quantity):
+def process_order(product, id, quantity):
     if product and id and quantity and quantity >= 1 :
-        product = check_product(id)
-        if not product or quantity > product.in_stock:
+        product = retrieve_product(id)
+        if product and quantity <= product.in_stock:
+            #save order here
+        else:
             error_code = 422
             return_object = {
                                 "errors" : {

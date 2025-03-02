@@ -56,7 +56,7 @@ def _fetch_inital_data():
         print(f"Error fetching data: {e}")
         return None
     
-def check_product(id):
+def retrieve_product(id):
     db_session = Session()
 
     product = db_session.query(Product).get(id)

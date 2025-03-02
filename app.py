@@ -22,7 +22,7 @@ def post_order():
     id = product.get('id', {})
     quantity = product.get('quantity', {})
 
-    return_object, error_code = check_availability(product, id, quantity)
+    return_object, error_code = process_order(product, id, quantity)
     return return_object, error_code
 
 if __name__ == '__main__':
