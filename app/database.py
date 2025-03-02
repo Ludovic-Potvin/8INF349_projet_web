@@ -2,10 +2,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from config import Config
-from .models.product import Product
-from .models.Order import Order
-from .models.Shipping_information import ShippingInformation
-from .models.CreditCard import CreditCard
+from app.models.Order import Order
+from app.models.Shipping_information import ShippingInformation
+from app.models.CreditCard import CreditCard
+from app.models.products import Product
 import urllib.request
 from app.models.base import Base
 import json
