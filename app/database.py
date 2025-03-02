@@ -1,3 +1,4 @@
+from flask import jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from config import Config
@@ -54,3 +55,18 @@ def _fetch_inital_data():
     except Exception as e:
         print(f"Error fetching data: {e}")
         return None
+    
+def check_product(id, quantity):
+    db_session = Session()
+    product = db_session.query(Product).get(id)
+    if not product or not product.in_stock : #Product does not have a quantity stored ! Can we buy infinite product when in stock ?
+        return jsonify({
+                        "errors" : {
+                            "product": {
+                                "code": "Out-of-inventory",
+                                "name": "Le produit demandé n'est pas en inventaire"
+                            }
+                        }
+                    }), 422
+    return jsonify(), 200
+    #buying_process(id, quantity)
