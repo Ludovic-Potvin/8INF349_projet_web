@@ -5,14 +5,14 @@ import logging.config
 import os
 
 from flask import Flask
-from flask import jsonify
+from flask import request, jsonify
 
 from app.database import init_db
 from config import Config
 
 
-from app import create_app
-from app.database import init_db, update_order_shipping, update_order_card
+from app.database import init_db, Session
+from app.OrderController import update_order_shipping, update_order_card
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -52,9 +52,9 @@ def order_update(id):
                 }), 400
 
     if 'order' in data:
-        return update_order_shipping(id, data)
+        return update_order_shipping(id, data, Session)
     elif 'credit_card' in data:
-        return update_order_card(id, data)
+        return update_order_card(id, data,Session)
     else:
         return jsonify({"error": "tea - how did you end up here"}), 418
 
