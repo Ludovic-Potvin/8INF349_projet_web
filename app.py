@@ -1,17 +1,20 @@
-from app import create_app
-from app.database import init_db
-from app.database import *
 import json
-from flask import jsonify
-import json
+
 import logging.config
 import os
 
-
 from flask import Flask
+from flask import jsonify
+
 
 from app.database import init_db
 from config import Config
+
+from app.database import *
+
+
+
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
