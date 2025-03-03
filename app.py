@@ -1,12 +1,18 @@
+
 import json
 
 import logging.config
 import os
 
 from flask import Flask
+from flask import request, jsonify
 
 from app.database import init_db
 from config import Config
+
+
+from app.database import init_db, Session
+from app.OrderController import update_order_shipping, update_order_card
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -30,6 +36,28 @@ def setup_logging():
 def hello_world():  # todo put application's code here
     app.logger.info('Hello World')
     return 'Hello World!'
+
+
+@app.route('/order/<int:id>', methods=['PUT'])
+def order_update(id):
+    data = request.get_json()
+    #Only one type of data check
+    if 'order' in data and 'credit_card' in data:
+        return jsonify({"errors": {
+                    "order": {
+                        "code": "Bad Request",
+                        "name": "Un seul type d'information peut être modifier à la fois"
+                        }
+                    }
+                }), 400
+
+    if 'order' in data:
+        return update_order_shipping(id, data, Session)
+    elif 'credit_card' in data:
+        return update_order_card(id, data,Session)
+    else:
+        return jsonify({"error": "tea - how did you end up here"}), 418
+
 
 if __name__ == '__main__':
     setup_logging()
