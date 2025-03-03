@@ -4,9 +4,17 @@ import logging.config
 import os
 
 from flask import Flask
+from flask import jsonify
+
 
 from app.database import init_db
 from config import Config
+
+from app.database import *
+
+
+
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -28,8 +36,24 @@ def setup_logging():
 
 @app.route('/')
 def hello_world():  # todo put application's code here
-    app.logger.info('Hello World')
-    return 'Hello World!'
+    return jsonify({'Message': 'hello world'}), 200
+
+@app.route('/products')
+def products():
+    list_of_products = get_products()
+    print(json.dumps(list_of_products, indent=4) )
+    print(type( list_of_products))
+    return jsonify(list_of_products), 200
+
+@app.route('/products/<int:product_id>')
+def product(product_id):
+    product = get_product(product_id)
+    print(product)
+    print(type(product))
+    if product is None:
+        return jsonify({'error': f'Product with id {product_id} not found'}), 404
+    return jsonify(product), 200
+
 
 if __name__ == '__main__':
     setup_logging()
