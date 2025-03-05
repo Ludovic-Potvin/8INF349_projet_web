@@ -4,7 +4,27 @@ from .models.Shipping_information import ShippingInformation
 from .models.CreditCard import CreditCard
 
 #======== PUT ========
+# Description: Redirect to the correct function
+@classmethod
+def update(id, data, Session):
+    if 'order' in data and 'credit_card' in data:
+        return {"errors": {
+                    "order": {
+                        "code": "Bad Request",
+                        "name": "Un seul type d'information peut être modifier à la fois"
+                        }
+                    }
+                }, 400
+
+    if 'order' in data:
+        return update_order_shipping(id, data, Session)
+    elif 'credit_card' in data:
+        return update_order_card(id, data, Session)
+    else:
+        return {"error": "tea - how did you end up here"}, 418
+
 # Description: Only update the shipping info and the email
+@classmethod
 def update_order_shipping(id, data, session):
     db_session = session()
 
@@ -71,6 +91,7 @@ def update_order_shipping(id, data, session):
     return jsonify(order.to_dict()), 200
 
 #Description: Only update the credit card info
+@classmethod
 def update_order_card(id, data, session):
     db_session = session()
 
