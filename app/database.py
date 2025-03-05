@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from config import Config
-from .models.product import Product
+from app.models.product import Product
 import urllib.request
 from sqlalchemy.ext.declarative import declarative_base
 from app.models.base import Base
