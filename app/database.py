@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 from config import Config
 from app.models.product import Product
 import urllib.request
-from sqlalchemy.ext.declarative import declarative_base
 from app.models.base import Base
 import json
 
@@ -17,35 +17,31 @@ def init_db():
     """Create tables and populate database if needed."""
     Base.metadata.create_all(bind=engine)
 
-    db_session = Session()
+    with Session() as session:
+        try:
+            if not session.query(Product).first():
+                _populate_db(session)
+                session.commit()
+            else:
+                print("Using existing database")
 
-    # Check if database is already populated
-    if db_session.query(Product).first() is None:
-        _populate_db(db_session)
-        print("Database created and populated")
-    else:
-        print("Using existing database")
+        except Exception as e:
+            print(f"Failed to populate database: {e}")
+        finally:
+            session.close()
 
-    db_session.close()
 
 def _populate_db(session):
-    data = _fetch_inital_data()
-
-    if data.get("products"):
-        for item in data.get('products'):
-            new_product = Product(
-                name=item['name'],
-                description=item['description'],
-                in_stock=item['in_stock'],
-                price=item['price'],
-                weight=item['weight'],
-                image=item['image']
-            )
+    data = _fetch_initial_data()
+    try:
+        for product in data.get('products', []):
+            new_product = Product(**product)
             session.add(new_product)
+    except TypeError as e:
+        print(f"Failed to populate database, a key is missing: {e}")
 
-        session.commit()
 
-def _fetch_inital_data():
+def _fetch_initial_data() -> dict:
     """Fetch product data from the API using urllib."""
     try:
         with urllib.request.urlopen(Config.SOURCE_API_URL) as response:
@@ -53,4 +49,4 @@ def _fetch_inital_data():
             return json.loads(data)
     except Exception as e:
         print(f"Error fetching data: {e}")
-        return None
+        return {}
