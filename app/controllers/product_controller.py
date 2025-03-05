@@ -14,10 +14,10 @@ class ProductController(object):
             try:
                 product = session.query(Product).filter(Product.id == product_id).first()
                 if product is None:
-                    abort(404, "Product not found")
+                    abort(404, f"Product {product_id} not found")
             except Exception as e:
                 app.logger.error(f"An error occurred: {str(e)}")
-                abort(404, "Product not found")
+                abort(500, "An unexpected server error happened")
             finally:
                 session.close()
 
