@@ -9,7 +9,8 @@ from app.models.order import Order
 class OrderController():
 
     @classmethod
-    def process_order(data):
+    def process_order(cls, data):
+        app.logger.info("Entered process_order")
         error_code = 200
         return_object = {"message": "Commande traitée avec succès"}
 
@@ -44,7 +45,8 @@ class OrderController():
         return return_object, error_code
     
     @classmethod
-    def get_order(order_id: int):
+    def get_order(cls, order_id: int):
+        app.logger.info("Entered get_order")
         with Session() as session:
             try:
                 order = session.query(Order).filter(Order.id == order_id).first()
@@ -55,10 +57,11 @@ class OrderController():
                 abort(500, "An unexpected server error happened")
             finally:
                 session.close()
-        return order.to_dict
+        return order.to_dict()
     
     @classmethod
     def _saveorder(product, quantity_ordered):
+            app.logger.info("Entered save_order")
             with Session() as session:
                 try:
                     # Création de la commande

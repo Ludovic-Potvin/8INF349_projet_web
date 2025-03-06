@@ -1,11 +1,12 @@
 from flask import Blueprint, request
-
+import app
 from app.controllers.order_controller import OrderController
 
 order = Blueprint('order', __name__, url_prefix='/order')
 
 @order.route('/', methods=['POST'])
 def post_order():
+    app.logger.info("Found route post_order")
     data = request.get_json()
 
     return_object, error_code = OrderController.process_order(data)
@@ -13,6 +14,7 @@ def post_order():
 
 @order.route('/<int:order_id>', methods=['GET'])
 def get_order(order_id: int):
+    app.logger.info("Found route get_order")
     error_code = 200
     return_object = {"message": "Commande traitée avec succès"}
     
