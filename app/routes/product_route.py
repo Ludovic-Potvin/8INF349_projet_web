@@ -10,4 +10,5 @@ def get_products():
 
 @products.route('/<int:product_id>')
 def get_product(product_id: int):
-    return ProductController.get_product_by_id(product_id)
+    product = ProductController.get_product_by_id(product_id)
+    return product.to_dict()

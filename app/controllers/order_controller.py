@@ -68,10 +68,10 @@ class OrderController():
                 abort(500, "An unexpected server error happened")
             finally:
                 session.close()
-        return order.to_dict()
+        return order
     
     @classmethod
-    def _saveorder(product, quantity_ordered):
+    def _saveorder(cls, product, quantity_ordered):
             app.logger.info("Entered save_order")
             print("Entered save_order")
             with Session() as session:
@@ -86,6 +86,7 @@ class OrderController():
                     product.in_stock -= quantity_ordered
 
                     # Sauvegarde dans la base de données
+                    session.add(product)
                     session.add(new_order)
                     session.commit()
 
