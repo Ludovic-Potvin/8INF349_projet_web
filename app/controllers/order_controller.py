@@ -60,6 +60,7 @@ class OrderController():
         with Session() as session:
             try:
                 order = session.query(Order).filter(Order.id == order_id).first()
+                error_code = 302
                 if order is None:
                     abort(404, f"Order {order_id} not found")
                     print(f"Order {order_id} not found")
@@ -68,7 +69,7 @@ class OrderController():
                 abort(500, "An unexpected server error happened")
             finally:
                 session.close()
-        return order
+        return order, error_code
     
     @classmethod
     def _saveorder(cls, product, quantity_ordered):
@@ -93,7 +94,7 @@ class OrderController():
                 app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
                 location = url_for('order.get_order', order_id=new_order.id, _external=True)
                 return_object = "Location : " + location
-                error_code = 302
+                error_code = 201
             except Exception as e:
                 app.logger.error(f"An error occurred: {str(e)}")
                 abort(500, "An unexpected server error happened")

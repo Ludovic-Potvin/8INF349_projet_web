@@ -17,5 +17,5 @@ def get_order(order_id: int):
     app.logger.info("Found route get_order")
     return_object = {"message": "Commande traitée avec succès"}
     
-    return_object = OrderController.get_order(order_id)
-    return return_object.to_dict()
+    return_object, error_code = OrderController.get_order(order_id)
+    return return_object.to_dict(), error_code
