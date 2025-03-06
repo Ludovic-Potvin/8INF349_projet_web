@@ -214,8 +214,6 @@ class OrderController():
         app.logger.info("update_order_card")
         order, error_code = self.get_order(id)
 
-        order, error_code = self.get_order(id)
-
         credit_card = data.get('credit_card')
         if not credit_card:
             return {
