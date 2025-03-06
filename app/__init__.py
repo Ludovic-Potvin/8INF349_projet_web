@@ -5,7 +5,7 @@ import logging.config
 from flask import Flask
 
 from config import Config
-from app.routes import product_route
+from app.routes import product_route, order_route
 
 logger = logging.getLogger("app")
 
@@ -29,5 +29,6 @@ def create_app():
     app.config.from_object(Config)
 
     app.register_blueprint(product_route.products)
+    app.register_blueprint(order_route.order)
 
     return app
