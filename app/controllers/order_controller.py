@@ -1,5 +1,9 @@
 import app
 from app.controllers.product_controller import ProductController
+from flask import abort
+from ..models.Order import Order
+from ..models.Shipping_information import ShippingInformation
+from ..models.CreditCard import CreditCard
 from app.database import Session
 from flask import abort, url_for, jsonify
 
@@ -112,20 +116,20 @@ class OrderController():
         app.logger.info("Entered update")
         print("Entered update")
         if 'order' in data and 'credit_card' in data:
-            return {"errors": {
+            return abort(400, {"errors": {
                         "order": {
                             "code": "Bad Request",
                             "name": "Un seul type d'information peut être modifier à la fois"
                             }
                         }
-                    }, 400
+                    })
 
         if 'order' in data:
             return self.update_order_shipping(id, data)
         elif 'credit_card' in data:
             return self.update_order_card(id, data)
         else:
-            return {"error": "tea - how did you end up here"}, 418
+            return abort(418, {"error": "tea - how did you end up here"})
 
     # Description: Only update the shipping info and the email
     @classmethod
