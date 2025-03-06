@@ -24,7 +24,10 @@ class ProductController(object):
                 #for product in products: products_list.append(product.as_dict())
             except Exception as e:
                 app.logger.error(f"An error occurred: {str(e)}")
-                abort(500, "An unexpected server error happened")
+                if "404" in str(e):
+                    abort(404, message="No products were found")
+                else:
+                    abort(500, "An unexpected server error happened")
             finally:
                 session.close()
         return products_list
@@ -36,10 +39,14 @@ class ProductController(object):
             try:
                 product = session.query(Product).filter(Product.id == product_id).first()
                 if product is None:
-                    abort(404, f"Product {product_id} not found")
+                    abort(404)
             except Exception as e:
+                print(f"An error occurred: {str(e)}")
                 app.logger.error(f"An error occurred: {str(e)}")
-                abort(500, "An unexpected server error happened")
+                if "404" in str(e):
+                    abort(404, f"Product {product_id} not found")
+                else:
+                    abort(500, "An unexpected server error happened")
             finally:
                 session.close()
 
