@@ -11,6 +11,7 @@ class OrderController():
     @classmethod
     def process_order(cls, data):
         app.logger.info("Entered process_order")
+        print("Entered process_order")
         error_code = 200
         return_object = {"message": "Commande traitée avec succès"}
 
@@ -20,11 +21,15 @@ class OrderController():
         
         if product and id and quantity and quantity >= 1 :
             app.logger.info(f"Try to get product #{id} in database")
+            print(f"Try to get product #{id} in database")
             product = ProductController.get_product_by_id(id)
+            print("Fetch cleared")
             if product and quantity <= product.in_stock:
+                print("Product in stock")
                 OrderController._saveorder(product, quantity)
             else:
                 app.logger.error("Product not in stock")
+                print("Product not in database")
                 error_code = 422
                 return_object = {
                                     "errors" : {
@@ -36,6 +41,7 @@ class OrderController():
                                 }
         else:
             app.logger.error("No product sent")
+            print("No product sent")
             error_code = 422
             return_object = {
                                 "errors" : {
@@ -50,11 +56,13 @@ class OrderController():
     @classmethod
     def get_order(cls, order_id: int):
         app.logger.info("Entered get_order")
+        print("Entered get_order")
         with Session() as session:
             try:
                 order = session.query(Order).filter(Order.id == order_id).first()
                 if order is None:
                     abort(404, f"Order {order_id} not found")
+                    print(f"Order {order_id} not found")
             except Exception as e:
                 app.logger.error(f"An error occurred: {str(e)}")
                 abort(500, "An unexpected server error happened")
@@ -65,6 +73,7 @@ class OrderController():
     @classmethod
     def _saveorder(product, quantity_ordered):
             app.logger.info("Entered save_order")
+            print("Entered save_order")
             with Session() as session:
                 try:
                     # Création de la commande
