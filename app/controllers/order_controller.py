@@ -24,6 +24,7 @@ class OrderController():
             if product and quantity <= product.in_stock:
                 OrderController._saveorder(product, quantity)
             else:
+                app.logger.error("Product not in stock")
                 error_code = 422
                 return_object = {
                                     "errors" : {
@@ -34,6 +35,7 @@ class OrderController():
                                     }
                                 }
         else:
+            app.logger.error("No product sent")
             error_code = 422
             return_object = {
                                 "errors" : {
