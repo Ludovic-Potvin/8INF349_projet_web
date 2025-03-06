@@ -1,8 +1,3 @@
-import json
-
-import logging.config
-import os
-
 from app import create_app
 from app.database import init_db
 
