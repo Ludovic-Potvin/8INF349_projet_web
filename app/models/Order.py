@@ -34,7 +34,7 @@ class Order(Base):
             'total_price_tax': self.total_price_tax,
             'transaction': self.transaction,
             'paid': self.paid,
-            'product': self.product.to_dict() if self.product else {},
+            'product': self.product.to_dict_PUT() if self.product else {},
             'shipping_price': self.shipping_price,
             'id': self.id
         }

@@ -216,35 +216,38 @@ class OrderController():
 
         credit_card = data.get('credit_card')
         if not credit_card:
-            return {
+            error_code = 422
+            return_object = {
                 "errors": {
                     "order": {
                         "code": "missing-fields",
                         "name": "Les informations du client sont nécessaire avant d'appliquer une carte de crédit"
                         }
                     }
-                }, 422
+                }
         required_fields = ['name', 'number', 'expiration_year', 'cvv', 'expiration_month']
         missing_fields = [field for field in required_fields if not credit_card.get(field)]
         if missing_fields:
-            return {
+            error_code = 422
+            return_object = {
                 "errors": {
                     "order": {
                         "code": "missing-fields",
                         "name": "Les informations du client sont nécessaire avant d'appliquer une carte de crédit"
                         }
                     }
-                }, 422
+                }
             
         if order.paid is True:
-            return {
+            error_code = 422
+            return_object = {
                 "errors" : {
                     "order": {
                         "code": "already-paid",
                         "name": "La commande a déjà été payée."
                     }
                 }
-            }, 422
+            }
 
         if(error_code is 302):
             #TO DO SEND CREDIT CARDS INFO TO SERVICE
