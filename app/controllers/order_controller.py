@@ -19,6 +19,7 @@ class OrderController():
         quantity = product.get('quantity', {})
         
         if product and id and quantity and quantity >= 1 :
+            app.logger.info(f"Try to get product #{id} in database")
             product = ProductController.get_product_by_id(id)
             if product and quantity <= product.in_stock:
                 OrderController._saveorder(product, quantity)
