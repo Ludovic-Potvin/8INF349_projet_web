@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from config import Config
-from app.models.product import Product
+from app.models.products import Product
 import urllib.request
 from app.models.base import Base
 import json

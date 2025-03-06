@@ -1,11 +1,8 @@
-from dataclasses import dataclass
-
 from sqlalchemy import Column, Integer, String, Float
 
 from app.models.base import Base
 
 
-@dataclass
 class Product(Base):
     __tablename__ = 'product'
 
@@ -18,6 +15,9 @@ class Product(Base):
     weight = Column(Float, nullable=True)
     price = Column(Float, nullable=False)
     in_stock = Column(Integer, nullable=False)
+
+    def __repr__(self):
+        return f'<Product {self.name}>'
 
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
