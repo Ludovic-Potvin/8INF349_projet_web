@@ -2,7 +2,7 @@ from flask import abort, jsonify, Response
 
 import app
 from app.database import Session
-from app.models.product import Product
+from app.models.products import Product
 
 
 class ProductController(object):
