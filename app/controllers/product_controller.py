@@ -17,7 +17,7 @@ class ProductController(object):
                     abort(404, message="No products were found")
                 products_list = []
                 for product in products:
-                    products_list.append(product.as_dict())
+                    products_list.append(product.to_dict())
                 #The following code will also work but I don't find it clear enough.
                 #To see how this was done, look at the documentation.
                 #products_list = [product.as_dict() for product in products]
@@ -30,7 +30,7 @@ class ProductController(object):
         return products_list
 
     @classmethod
-    def get_product_by_id(cls, product_id: int):
+    def get_product_by_id(cls, product_id: int) -> Product | None:
         """Return a single product by id"""
         with Session() as session:
             try:
@@ -43,5 +43,5 @@ class ProductController(object):
             finally:
                 session.close()
 
-        return product.to_dict()
+        return product
 

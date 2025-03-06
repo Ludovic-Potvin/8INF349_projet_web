@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 
@@ -16,8 +17,10 @@ class Product(Base):
     price = Column(Float, nullable=False)
     in_stock = Column(Integer, nullable=False)
 
+    orders = relationship('Order', back_populates='product')
+
     def __repr__(self):
         return f'<Product {self.name}>'
 
     def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'orders'}
