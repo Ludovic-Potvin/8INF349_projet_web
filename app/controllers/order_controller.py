@@ -1,7 +1,7 @@
 import app
 from app.controllers.product_controller import ProductController
 from app.database import Session
-from flask import abort
+from flask import abort, url_for
 
 from app.models.order import Order
 
@@ -26,7 +26,7 @@ class OrderController():
             print("Fetch cleared")
             if product and quantity <= product.in_stock:
                 print("Product in stock")
-                OrderController._saveorder(product, quantity)
+                return_object, error_code = OrderController._saveorder(product, quantity)
             else:
                 app.logger.error("Product not in stock")
                 print("Product not in database")
@@ -72,27 +72,31 @@ class OrderController():
     
     @classmethod
     def _saveorder(cls, product, quantity_ordered):
-            app.logger.info("Entered save_order")
-            print("Entered save_order")
-            with Session() as session:
-                try:
-                    # Création de la commande
-                    new_order = Order(
-                        product_id=product.id,
-                        quantity = quantity_ordered
-                    )
+        app.logger.info("Entered save_order")
+        print("Entered save_order")
+        with Session() as session:
+            try:
+                # Création de la commande
+                new_order = Order(
+                    product_id=product.id,
+                    quantity = quantity_ordered
+                )
 
-                    # Mise à jour du stock du produit
-                    product.in_stock -= quantity_ordered
+                # Mise à jour du stock du produit
+                product.in_stock -= quantity_ordered
 
-                    # Sauvegarde dans la base de données
-                    session.add(product)
-                    session.add(new_order)
-                    session.commit()
+                # Sauvegarde dans la base de données
+                session.add(product)
+                session.add(new_order)
+                session.commit()
 
-                    app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
-                except Exception as e:
-                    app.logger.error(f"An error occurred: {str(e)}")
-                    abort(500, "An unexpected server error happened")
-                finally:
-                    session.close()
+                app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
+                location = url_for('order.get_order', order_id=new_order.id, _external=True)
+                return_object = "Location : " + location
+                error_code = 302
+            except Exception as e:
+                app.logger.error(f"An error occurred: {str(e)}")
+                abort(500, "An unexpected server error happened")
+            finally:
+                session.close()
+        return return_object, error_code
