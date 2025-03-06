@@ -177,7 +177,7 @@ class OrderController():
             }
 
         print("No error in data")
-        if(error_code is 302):
+        if(error_code == 302):
             with Session() as session:
                 try:
                     order.email = email
@@ -249,7 +249,7 @@ class OrderController():
                 }
             }
 
-        if(error_code is 302):
+        if(error_code == 302):
             #TO DO SEND CREDIT CARDS INFO TO SERVICE
             # if error:
                 #return msg
