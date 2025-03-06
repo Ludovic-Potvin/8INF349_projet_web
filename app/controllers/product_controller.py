@@ -3,6 +3,7 @@ from flask import abort
 import app
 from app.database import Session
 from app.models.products import Product
+from flask import current_app
 
 
 class ProductController(object):
@@ -23,7 +24,7 @@ class ProductController(object):
                 #products_list = [product.as_dict() for product in products]
                 #for product in products: products_list.append(product.as_dict())
             except Exception as e:
-                app.logger.error(f"An error occurred: {str(e)}")
+                current_app.logger.error(f"An error occurred: {str(e)}")
                 abort(500, "An unexpected server error happened")
             finally:
                 session.close()
@@ -38,7 +39,7 @@ class ProductController(object):
                 if product is None:
                     abort(404, f"Product {product_id} not found")
             except Exception as e:
-                app.logger.error(f"An error occurred: {str(e)}")
+                current_app.logger.error(f"An error occurred: {str(e)}")
                 abort(500, "An unexpected server error happened")
             finally:
                 session.close()

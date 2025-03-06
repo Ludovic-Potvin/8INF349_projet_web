@@ -1,13 +1,11 @@
 import json
 import os
-import logging.config
+from logging.config import dictConfig
 
 from flask import Flask
 
 from config import Config
 from app.routes import product_route, order_route
-
-logger = logging.getLogger("app")
 
 def setup_logging(log_file, log_directory):
     """Set up the logger configuration."""
@@ -18,7 +16,7 @@ def setup_logging(log_file, log_directory):
 
     with open(config_file) as f_in:
         log_config = json.load(f_in)
-    logging.config.dictConfig(log_config)
+    dictConfig(log_config)
 
 
 def create_app():
@@ -27,6 +25,8 @@ def create_app():
 
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    app.logger.debug("Test log from the app logger")
 
     app.register_blueprint(product_route.products)
     app.register_blueprint(order_route.order)
