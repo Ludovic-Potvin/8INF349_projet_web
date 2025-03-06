@@ -23,4 +23,4 @@ class Product(Base):
         return f'<Product {self.name}>'
 
     def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name is not 'orders'}
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'orders'}
