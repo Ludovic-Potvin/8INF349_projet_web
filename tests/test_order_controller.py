@@ -112,5 +112,6 @@ class TestProductController:
 
     def test_add_credit_card_information(self):
         response1 = OrderController.process_order(self.generate_order(1, 1))
+        response2 = OrderController.update(2 ,self.generate_shipping_information())
         response3 = OrderController.update(2, self.generate_valid_credit_card())
         assert response3[1] == 200
