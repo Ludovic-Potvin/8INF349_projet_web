@@ -25,7 +25,7 @@ class TestProductController:
         }
 
     @staticmethod
-    def generate_order_information():
+    def generate_shipping_information():
         return {
             "order" : {
                 "email": "jgnault@uqac.ca",
@@ -105,10 +105,12 @@ class TestProductController:
 
 
     def test_add_shipping_information(self):
-        response = OrderController.process_order(self.generate_order(1, 1))
+        response1 = OrderController.process_order(self.generate_order(1, 1))
+        response2 = OrderController.update(2, self.generate_shipping_information())
+        assert response2[1] == 200
         #add the code to add the shipping information
 
     def test_add_credit_card_information(self):
-        response = OrderController.process_order(self.generate_order(1, 1))
-        # add the code to add the shipping information
-        # add the code to add the credit card information
+        response1 = OrderController.process_order(self.generate_order(1, 1))
+        response3 = OrderController.update(2, self.generate_valid_credit_card())
+        assert response3[1] == 200

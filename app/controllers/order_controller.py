@@ -3,12 +3,25 @@ from app.controllers.product_controller import ProductController
 from flask import abort
 from app.database import Session
 from flask import abort, url_for, jsonify
-
+import json
+import requests
+import app
 from app.models.order import Order
 from app.models.shipping_information import ShippingInformation
 from app.models.credit_card import CreditCard
 
-class OrderController():
+class OrderController:
+
+    @classmethod
+    def make_payment(cls, credit_card_information, amount_charged):
+        url = "https://dimensweb.uqac.ca/~jgnault/shops/pay/"
+        payload = {
+            "credit_card": credit_card_information,
+            "amount_charged": amount_charged
+        }
+        response = requests.post(url, json=payload)
+
+        return response.json()
 
     @classmethod
     def process_order(cls, data):
@@ -93,7 +106,7 @@ class OrderController():
                 shipping = 10
             else:
                 shipping = 25
-                
+
             try:
                 # Création de la commande
                 new_order = Order(
@@ -228,7 +241,7 @@ class OrderController():
                     session.add(instance=order)
                     session.commit()
                     error_code = 200
-                    return_object = jsonify(order.to_dict())
+                    return_object = order.to_dict()
                 except Exception as e:
                     app.logger.error(f"An error occurred: {str(e)}")
                     abort(500, "An unexpected server error happened")
@@ -281,9 +294,10 @@ class OrderController():
             }
 
         if(error_code == 302):
-            #TO DO SEND CREDIT CARDS INFO TO SERVICE
-            # if error:
-                #return msg
+            total = order.total_price_tax + order.shipping_price
+            response = self.make_payment(credit_card, total)
+            if response["status_code"] != 200:
+                return response.json, response.status_code
             with Session() as session:
                 try:
                     if order.creditCard:
@@ -309,7 +323,7 @@ class OrderController():
                     session.commit()
                     app.logger.info("update_order_card did")
                     error_code = 200
-                    return_object = jsonify(order.to_dict())
+                    return_object = order.to_dict()
                 finally:
                     session.close()
         return return_object, error_code
