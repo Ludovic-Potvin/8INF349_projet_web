@@ -112,10 +112,12 @@ class OrderController():
                 session.commit()
 
                 app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
-                location = url_for('order.get_order', order_id=new_order.id, _external=True)
+                location = f"http://127.0.0.1:5000/order/{new_order.id}"
+                #location = url_for('order.get_order', order_id=new_order.id, _external=True)
                 return_object = "Location : " + location
                 error_code = 201
             except Exception as e:
+                print(f"An error occurred: {str(e)}")
                 app.logger.error(f"An error occurred: {str(e)}")
                 abort(500, "An unexpected server error happened")
             finally:
