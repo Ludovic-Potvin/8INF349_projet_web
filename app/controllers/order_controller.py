@@ -74,7 +74,8 @@ class OrderController():
                 if order is None:
                     print(f"Order {order_id} not found")
                     abort(404, f"Order {order_id} not found")
-                else: abort(500, "An unexpected server error happened")
+                else: 
+                    abort(500, "An unexpected server error happened")
             finally:
                 session.close()
         return order, error_code
@@ -110,7 +111,6 @@ class OrderController():
                 session.close()
         return return_object, error_code
     
-    #======== PUT ========
     # Description: Redirect to the correct function
     @classmethod
     def update(self, id, data):
@@ -184,15 +184,12 @@ class OrderController():
                 try:
                     order.email = email
                     if order.shipping_info:
-                        print("Updating")
                         order.shipping_info.country = shipping_data.get("country")
                         order.shipping_info.address = shipping_data.get("address")
                         order.shipping_info.postal_code = shipping_data.get("postal_code")
                         order.shipping_info.city = shipping_data.get("city")
                         order.shipping_info.province = shipping_data.get("province")
-                        print("Updated")
                     else:
-                        print("Adding")
                         new_shipping_info = ShippingInformation(
                             country=shipping_data.get("country"),
                             address=shipping_data.get("address"),
