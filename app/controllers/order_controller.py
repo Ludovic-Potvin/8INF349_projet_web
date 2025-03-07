@@ -202,13 +202,10 @@ class OrderController():
                             order_id=order.id
                         )
                         session.add(new_shipping_info)
-                        print("Added")
 
+                    session.add(instance=order)
                     session.commit()
-                    print("Commit")
                     error_code = 200
-                    print(error_code)
-                    print(order.to_dict())
                     return_object = jsonify(order.to_dict())
                 except Exception as e:
                     app.logger.error(f"An error occurred: {str(e)}")
@@ -286,6 +283,7 @@ class OrderController():
                         session.add(credit_card)
 
                     order.paid = True
+                    session.add(instance=order)
                     session.commit()
                     app.logger.info("update_order_card did")
                     error_code = 200
