@@ -2,10 +2,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from config import Config
+from app.models.order import Order
+from app.models.shipping_information import ShippingInformation
+from app.models.credit_card import CreditCard
 from app.models.products import Product
 import urllib.request
 from app.models.base import Base
 import json
+
 
 # Create engine
 engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
@@ -22,6 +26,8 @@ def init_db():
             if not session.query(Product).first():
                 _populate_db(session)
                 session.commit()
+            if not session.query(Order).first():
+                _populate_order(session)
             else:
                 print("Using existing database")
 
@@ -50,3 +56,25 @@ def _fetch_initial_data() -> dict:
     except Exception as e:
         print(f"Error fetching data: {e}")
         return {}
+
+def _populate_order(session):
+    new_shipping_info = ShippingInformation(
+        country='Canada',
+        address='201, rue Président-Kennedy',
+        postal_code='G7X 3Y7',
+        city='Chicoutimi',
+        province='QC'
+    )
+    new_order = Order(
+    email="customer@example.com",
+    total_price=200,
+    total_price_tax=20,
+    transaction="txn_123456",
+    paid=True,
+    shipping_price=10,
+    product_id=1,
+    quantity=1,
+    shipping_info = new_shipping_info,
+    )
+    session.add(new_order)
+    session.commit()

@@ -19,3 +19,8 @@ def get_order(order_id: int):
     
     return_object, error_code = OrderController.get_order(order_id)
     return return_object.to_dict(), error_code
+
+@order.route('/<int:id>', methods=['PUT'])
+def order_update(id):
+    data = request.get_json()
+    return OrderController.update(id, data)

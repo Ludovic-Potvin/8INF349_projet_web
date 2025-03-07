@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from app.models.base import Base
 
 
@@ -21,6 +20,5 @@ class Product(Base):
 
     def __repr__(self):
         return f'<Product {self.name}>'
-
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'orders'}
