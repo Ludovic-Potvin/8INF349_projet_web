@@ -85,11 +85,22 @@ class OrderController():
         app.logger.info("Entered save_order")
         print("Entered save_order")
         with Session() as session:
+            price = product.price * quantity_ordered
+            weight = product.weight * quantity_ordered
+            if weight < 500:
+                shipping = 5
+            elif weight > 500 and weight > 2000:
+                shipping = 10
+            else:
+                shipping = 25
+                
             try:
                 # Création de la commande
                 new_order = Order(
                     product_id=product.id,
-                    quantity = quantity_ordered
+                    quantity = quantity_ordered,
+                    total_price = price,
+                    shipping_price = shipping
                 )
 
                 # Mise à jour du stock du produit
@@ -180,9 +191,17 @@ class OrderController():
             }
 
         if(error_code == 302):
+            tax = {
+                "QC" : order.total_price * 1.15,
+                "ON" : order.total_price * 1.13,
+                "AB" : order.total_price * 1.05,
+                "BC" : order.total_price * 1.12,
+                "NS" : order.total_price * 1.14
+            }
             with Session() as session:
                 try:
                     order.email = email
+                    order.total_price_tax = tax[shipping_data.get("province")]
                     if order.shipping_info:
                         order.shipping_info.country = shipping_data.get("country")
                         order.shipping_info.address = shipping_data.get("address")
