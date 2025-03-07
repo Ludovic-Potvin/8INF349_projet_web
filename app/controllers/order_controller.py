@@ -21,7 +21,7 @@ class OrderController:
         }
         response = requests.post(url, json=payload)
 
-        return response.json()
+        return response
 
     @classmethod
     def process_order(cls, data):
@@ -296,7 +296,7 @@ class OrderController:
         if(error_code == 302):
             total = order.total_price_tax + order.shipping_price
             response = self.make_payment(credit_card, total)
-            if response["status_code"] != 200:
+            if response.status_code != 200:
                 return response.json, response.status_code
             with Session() as session:
                 try:
