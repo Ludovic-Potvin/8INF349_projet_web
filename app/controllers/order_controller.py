@@ -2,7 +2,7 @@ import app
 from app.controllers.product_controller import ProductController
 from flask import abort
 from app.database import Session
-from flask import abort, url_for, jsonify
+from flask import abort, url_for, jsonify, current_app
 
 from app.models.order import Order
 from app.models.shipping_information import ShippingInformation
@@ -12,7 +12,7 @@ class OrderController():
 
     @classmethod
     def process_order(cls, data):
-        app.logger.info("Entered process_order")
+        current_app.logger.info("Entered process_order")
         print("Entered process_order")
         error_code = 200
         return_object = {"message": "Commande traitée avec succès"}
@@ -22,7 +22,7 @@ class OrderController():
         quantity = product.get('quantity', {})
         
         if product and id and quantity and quantity >= 1 :
-            app.logger.info(f"Try to get product #{id} in database")
+            current_app.logger.info(f"Try to get product #{id} in database")
             print(f"Try to get product #{id} in database")
             product = ProductController.get_product_by_id(id)
             print("Fetch cleared")
@@ -30,7 +30,7 @@ class OrderController():
                 print("Product in stock")
                 return_object, error_code = OrderController._saveorder(product, quantity)
             else:
-                app.logger.error("Product not in stock")
+                current_app.logger.error("Product not in stock")
                 print("Product not in database")
                 error_code = 422
                 return_object = {
@@ -42,7 +42,7 @@ class OrderController():
                                     }
                                 }
         else:
-            app.logger.error("No product sent")
+            current_app.logger.error("No product sent")
             print("No product sent")
             error_code = 422
             return_object = {
@@ -57,7 +57,7 @@ class OrderController():
     
     @classmethod
     def get_order(cls, order_id: int):
-        app.logger.info("Entered get_order")
+        current_app.logger.info("Entered get_order")
         print("Entered get_order")
         with Session() as session:
             try:
@@ -70,7 +70,7 @@ class OrderController():
                     print(f"Order {order_id} not found")
                     abort(404)
             except Exception as e:
-                app.logger.error(f"An error occurred: {str(e)}") 
+                current_app.logger.error(f"An error occurred: {str(e)}")
                 if order is None:
                     print(f"Order {order_id} not found")
                     abort(404, f"Order {order_id} not found")
@@ -82,7 +82,7 @@ class OrderController():
     
     @classmethod
     def _saveorder(cls, product, quantity_ordered):
-        app.logger.info("Entered save_order")
+        current_app.logger.info("Entered save_order")
         print("Entered save_order")
         with Session() as session:
             try:
@@ -100,12 +100,12 @@ class OrderController():
                 session.add(new_order)
                 session.commit()
 
-                app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
+                current_app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
                 location = url_for('order.get_order', order_id=new_order.id, _external=True)
                 return_object = "Location : " + location
                 error_code = 201
             except Exception as e:
-                app.logger.error(f"An error occurred: {str(e)}")
+                current_app.logger.error(f"An error occurred: {str(e)}")
                 abort(500, "An unexpected server error happened")
             finally:
                 session.close()
@@ -114,7 +114,7 @@ class OrderController():
     # Description: Redirect to the correct function
     @classmethod
     def update(self, id, data):
-        app.logger.info("Entered update")
+        current_app.logger.info("Entered update")
         print("Entered update")
         if 'order' in data and 'credit_card' in data:
             return abort(400, {"errors": {
@@ -135,7 +135,7 @@ class OrderController():
     # Description: Only update the shipping info and the email
     @classmethod
     def update_order_shipping(self, id, data):
-        app.logger.info("update_order_shipping")
+        current_app.logger.info("update_order_shipping")
         order, error_code = self.get_order(id)
         order_data = data.get('order')
         if not order_data:
@@ -205,7 +205,7 @@ class OrderController():
                     error_code = 200
                     return_object = jsonify(order.to_dict())
                 except Exception as e:
-                    app.logger.error(f"An error occurred: {str(e)}")
+                    current_app.logger.error(f"An error occurred: {str(e)}")
                     abort(500, "An unexpected server error happened")
                 finally:
                     session.close()
@@ -215,12 +215,12 @@ class OrderController():
     #Description: Only update the credit card info
     @classmethod
     def update_order_card(self, id, data):
-        app.logger.info("update_order_card")
+        current_app.logger.info("update_order_card")
         order, error_code = self.get_order(id)
 
         credit_card = data.get('credit_card')
         if not credit_card:
-            app.logger.info("missing card")
+            current_app.logger.info("missing card")
             error_code = 422
             return_object = {
                 "errors": {
@@ -233,7 +233,7 @@ class OrderController():
         required_fields = ['name', 'number', 'expiration_year', 'cvv', 'expiration_month']
         missing_fields = [field for field in required_fields if not credit_card.get(field)]
         if missing_fields:
-            app.logger.info("missing field")
+            current_app.logger.info("missing field")
             error_code = 422
             return_object = {
                 "errors": {
@@ -244,7 +244,7 @@ class OrderController():
                     }
                 }
         if order.paid is True:
-            app.logger.info("already paid")
+            current_app.logger.info("already paid")
             error_code = 422
             return_object = {
                 "errors" : {
@@ -282,7 +282,7 @@ class OrderController():
                     order.paid = True
                     session.add(instance=order)
                     session.commit()
-                    app.logger.info("update_order_card did")
+                    current_app.logger.info("update_order_card did")
                     error_code = 200
                     return_object = jsonify(order.to_dict())
                 finally:
