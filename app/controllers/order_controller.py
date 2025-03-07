@@ -5,8 +5,8 @@ from app.database import Session
 from flask import abort, url_for, jsonify
 
 from app.models.order import Order
-from app.models.Shipping_information import ShippingInformation
-from app.models.CreditCard import CreditCard
+from app.models.shipping_information import ShippingInformation
+from app.models.credit_card import CreditCard
 
 class OrderController():
 

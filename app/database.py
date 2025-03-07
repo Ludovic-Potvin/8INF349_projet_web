@@ -3,8 +3,8 @@ from sqlalchemy.orm import sessionmaker
 
 from config import Config
 from app.models.order import Order
-from app.models.Shipping_information import ShippingInformation
-from app.models.CreditCard import CreditCard
+from app.models.shipping_information import ShippingInformation
+from app.models.credit_card import CreditCard
 from app.models.products import Product
 import urllib.request
 from app.models.base import Base
