@@ -11,6 +11,11 @@ from app.database import init_db
 class TestProductController:
 
     @staticmethod
+    def reset_database():
+        os.remove(Config.SQLALCHEMY_DATABASE_LOCATION)
+        init_db()
+
+    @staticmethod
     def generate_order(product_id, quantity):
         return {
             "product": {
@@ -20,9 +25,55 @@ class TestProductController:
         }
 
     @staticmethod
-    def reset_database():
-        os.remove(Config.SQLALCHEMY_DATABASE_LOCATION)
-        init_db()
+    def generate_order_information():
+        return {
+            "order" : {
+                "email": "jgnault@uqac.ca",
+                "shipping_information" : {
+                    "country": "Canada",
+                    "address": "201, rue Président-Kennedy",
+                    "postal_code": "G7X 3Y7",
+                    "city": "Chicoutimi",
+                    "province": "QC"
+                }
+            }
+        }
+
+    @staticmethod
+    def generate_missing_field_order_information():
+        return {
+            "order" : {
+                "shipping_information": {
+                    "country": "Canada",
+                    "province": "QC"
+                }
+            }
+        }
+
+    @staticmethod
+    def generate_valid_credit_card():
+        return {
+            "credit_card" : {
+                "name": "John Doe",
+                "number": "4242 4242 4242 4242",
+                "expiration_year": 2026,
+                "cvv": "123",
+                "expiration_month": 9
+            }
+        }
+
+    @staticmethod
+    def generate_invalid_credit_card():
+        return {
+            "credit_card": {
+                "name": "John Doe",
+                "number": "4000 0000 0000 0002",
+                "expiration_year": 2026,
+                "cvv": "123",
+                "expiration_month": 9
+            }
+        }
+
 
     @classmethod
     def setup_class(cls):
@@ -51,3 +102,13 @@ class TestProductController:
         response = OrderController.process_order(self.generate_order('',''))
         assert response[1] == 422
         assert "Missing-fields" in response[0]["errors"]["product"]["code"]
+
+
+    def test_add_shipping_information(self):
+        response = OrderController.process_order(self.generate_order(1, 1))
+        #add the code to add the shipping information
+
+    def test_add_credit_card_information(self):
+        response = OrderController.process_order(self.generate_order(1, 1))
+        # add the code to add the shipping information
+        # add the code to add the credit card information
