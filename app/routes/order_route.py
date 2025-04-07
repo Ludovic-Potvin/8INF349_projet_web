@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, render_template, jsonify
 import app
 from app.controllers.order_controller import OrderController
 
@@ -18,7 +18,7 @@ def get_order(order_id: int):
     return_object = {"message": "Commande traitée avec succès"}
     
     return_object, error_code = OrderController.get_order(order_id)
-    return return_object.to_dict(), error_code
+    return render_template('panier.html', order=jsonify(return_object.to_dict())), error_code
 
 @order.route('/<int:id>', methods=['PUT'])
 def order_update(id):

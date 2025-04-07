@@ -30,7 +30,7 @@ class ProductController(object):
                     abort(500, "An unexpected server error happened")
             finally:
                 session.close()
-        return products_list
+        return products
 
     @classmethod
     def get_product_by_id(cls, product_id: int) -> Product | None:

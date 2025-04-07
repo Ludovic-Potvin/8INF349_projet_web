@@ -30,6 +30,7 @@ class OrderController:
         error_code = 200
         return_object = {"message": "Commande traitée avec succès"}
 
+        app.logger.info(data.get('product', {}))
         product = data.get('product', {})
         id = product.get('id', {})
         quantity = product.get('quantity', {})
