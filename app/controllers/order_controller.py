@@ -30,10 +30,9 @@ class OrderController:
         error_code = 200
         return_object = {"message": "Commande traitée avec succès"}
 
-        app.logger.info(data.get('product', {}))
         product = data.get('product', {})
-        id = product.get('id', {})
-        quantity = product.get('quantity', {})
+        id = int(product.get('id', {}))
+        quantity = int(product.get('quantity', {}))
         
         if product and id and quantity and quantity >= 1 :
             app.logger.info(f"Try to get product #{id} in database")
@@ -132,7 +131,7 @@ class OrderController:
                 except Exception as e:
                     location = f"http://127.0.0.1:5000/order/{new_order.id}"
 
-                return_object = "Location : " + location
+                return_object =  {"location": location}
                 error_code = 201
             except Exception as e:
                 print(f"An error occurred: {str(e)}")
