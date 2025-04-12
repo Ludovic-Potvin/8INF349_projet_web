@@ -18,6 +18,7 @@ def get_order(order_id: int):
     return_object = {"message": "Commande traitée avec succès"}
     
     return_object, error_code = OrderController.get_order(order_id)
+    print(return_object.product_id)
     return render_template('panier.html', order=jsonify(return_object.to_dict())), error_code
 
 @order.route('/<int:id>', methods=['PUT'])
