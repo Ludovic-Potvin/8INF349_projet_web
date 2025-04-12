@@ -20,7 +20,6 @@ class OrderController:
             "amount_charged": amount_charged
         }
         response = requests.post(url, json=payload)
-
         return response
 
     @classmethod
@@ -181,7 +180,8 @@ class OrderController:
         
         email = order_data.get('email')
         shipping_data = order_data.get('shipping_information')
-        
+        print(email)
+        print(shipping_data)
         if shipping_data is None or  email is None:
             print("missing-fields")
             error_code = 422
@@ -253,7 +253,6 @@ class OrderController:
     #Description: Only update the credit card info
     @classmethod
     def update_order_card(self, id, data):
-        app.logger.info("update_order_card")
         order, error_code = self.get_order(id)
 
         credit_card = data.get('credit_card')
@@ -292,28 +291,31 @@ class OrderController:
                     }
                 }
             }
-
+        print(error_code)
         if(error_code == 302):
             total = order.total_price_tax + order.shipping_price
-            response = self.make_payment(credit_card, total)
+            response = self.make_payment(credit_card, int(total))
+            print("eeeeee", response)
             if response.status_code != 200:
+                print("hello")
                 return response.json, response.status_code
             with Session() as session:
                 try:
+                    print("here")
                     if order.creditCard:
                         order.creditCard.name = credit_card.get("name")
                         order.creditCard.number = credit_card.get("number")
-                        order.creditCard.expiration_year = credit_card.get("expiration_year")
+                        order.creditCard.expiration_year = int(credit_card.get("expiration_year"))
                         order.creditCard.cvv = credit_card.get("cvv")
-                        order.creditCard.exp_month = credit_card.get("exp_month")
+                        order.creditCard.exp_month = int(credit_card.get("exp_month"))
                     else:
                         # If the credit card doesn't exist, create a new one
                         credit_card = CreditCard(
                             name=credit_card['name'],
                             number=credit_card['number'],
-                            expiration_year=credit_card['expiration_year'],
+                            expiration_year=int(credit_card['expiration_year']),
                             cvv=credit_card['cvv'],
-                            exp_month=credit_card['expiration_month'],
+                            exp_month=int(credit_card['expiration_month']),
                             order_id=order.id
                         )
                         session.add(credit_card)

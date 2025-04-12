@@ -1,0 +1,85 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Addresse</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+</head>
+<body>
+    <nav class="navbar bg-dark border-bottom border-body" data-bs-theme="dark">
+        <div class="container-fluid">
+          <span class="navbar-brand mb-0 h1">Title</span>
+          <span><a href="/products/">Liste de produits</a></span>
+        </div>
+    </nav>
+    <form class="mb-3" id="shippingFormulaire">
+        <div class="mb-3">
+            <label for="email" class="form-label">Courriel:</label>
+            <input class="form-control" type="text" id="email" name="email" required>
+        </div>
+        <div class="mb-3">
+            <label for="country" class="form-label">Pays:</label>
+            <input class="form-control" type="text" id="country" name="country" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="address" class="form-label">Addresse:</label>
+            <input class="form-control" type="text" id="address" name="address" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="postal_code" class="form-label">Code Postal:</label>
+            <input class="form-control" type="text" id="postal_code" name="postal_code" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="city" class="form-label">Ville:</label>
+            <input class="form-control" type="text" id="city" name="city" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="province" class="form-label">Province:</label>
+            <input class="form-control" type="text" id="province" name="province" required>
+        </div>
+
+        <div>
+            <button class="btn btn-info" type="submit">Submit</button>
+        </div>
+    </form>
+</body>
+<script>
+    document.getElementById('shippingFormulaire').addEventListener('submit', async function (e) {
+        e.preventDefault()
+
+        const formData = new FormData(this);
+        let data = {};
+        const shipping_data = {};
+        formData.forEach((value, key) => {
+            if(key != "email") {
+                shipping_data[key] = value;
+            }
+            else {
+                data[key] = value;
+            }
+        });
+        data = { order: {...data, shipping_information: shipping_data } };
+        console.log("Sending JSON:", data);
+
+        const response = await fetch('/order/{{ id }}', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        console.log(result);
+        if(result.errors) {
+          alert(result.errors.product.code + "\n" + result.errors.product.name)
+        }
+        else if (response.ok) {
+          window.location.href = "/order/paiement/{{ id }}";
+        }
+    });
+</script>
+</html>

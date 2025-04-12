@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>confirmation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+</head>
+<body>
+    <nav class="navbar bg-dark border-bottom border-body" data-bs-theme="dark">
+        <div class="container-fluid">
+          <span class="navbar-brand mb-0 h1">Title</span>
+          <span class="navbar-brand mb-0 h1"><a href="/products/">Liste de produits</a></span>
+        </div>
+    </nav>
+    
+    <div class="container mt-3">
+      <div class="row">
+        <div class="col text-center">
+          <h2>Commande complété</h2>
+        </div>
+      </div>
+        <div class="row">
+          <div class="col-2"></div>
+          <div class="col-4">
+            {%  if order.paid %}
+              <h4>Commande réussie</h4>
+            {% endif %}
+          </div>
+          <div class="col-4">
+            {{ order.transaction }}
+          </div>
+          <div class="col-2">
+          </div>
+        </div>
+        <div class="row text-info bg-dark">
+          <div class="col-8">
+            <h3>Produit</h3>
+          </div>
+          <div class="col-2">
+            <h3> Quantité</h3>
+          </div>
+          <div class="col-2">
+            <h3> Prix</h3>
+          </div>
+        </div>
+        <!-- to - do changes for multiple products-->
+        <div class="row">
+            <div class="col-8">
+              {{ products.name }}
+            </div>
+            <div class="col-2">
+              {{ order.quantity }}
+            </div>
+            <div class="col-2">
+              {{ products.price }} $
+            </div>
+        </div>
+        <hr/>
+        <div class="row">
+          <div class="col-8"></div>
+          <div class="col-2">
+              Prix avec taxes
+          </div>
+          <div class="col-2 text-end">
+              {{ order.total_price_tax }} $
+          </div>
+      </div>
+      <div class="row">
+          <div class="col-8"></div>
+          <div class="col-2">
+              Prix transport
+          </div>
+          <div class="col-2 text-end">
+              {{ order.shipping_price }} $
+              <hr/>
+          </div>
+      </div>
+      <div class="row">
+          <div class="col-8"></div>
+          <div class="col-2 fw-bold">
+              Prix total
+          </div>
+          <div class="col-2 text-end">
+              {% set total = order.shipping_price + order.total_price_tax %}
+              {{ total }} $
+              <hr/>
+          </div>
+      </div>
+      
+    </div>
+</body>
+</html>

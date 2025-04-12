@@ -13,10 +13,58 @@
         </div>
     </nav>
     <h2>Panier</h2>
-    <ul class="list-group">
-            <li class="list-group-item">
-                {{ product }}
-            </li>
-    </ul>
+    <div class="container">
+        <div class="row text-info bg-dark">
+          <div class="col-8">
+            <h2>Produit</h2>
+          </div>
+          <div class="col-2">
+            <h2> Quantité</h2>
+          </div>
+          <div class="col-2">
+            <h2> Prix</h2>
+          </div>
+        </div>
+        <!-- to - do changes for multiple products-->
+        <div class="row">
+            <div class="col-8">
+              {{ products.name }}
+            </div>
+            <div class="col-2">
+              {{ order.quantity }}
+            </div>
+            <div class="col-2">
+              {{ products.price }} $
+            </div>
+        </div>
+        <hr/>
+        <div class="row">
+            <div class="col-8"></div>
+            <div class="col-2">
+                Prix
+            </div>
+            <div class="col-2">
+                {{ order.total_price }} $
+                <hr/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-8"></div>
+            <div class="col-2">
+                Prix transport
+            </div>
+            <div class="col-2">
+                {{ order.shipping_price }} $
+                <hr/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-10"></div>
+            <div class="col-2">
+                <a class="btn btn-info" href="{{ url_for('order.shipping_form', id=order.id) }}">Paiement</a>
+            </div>
+        </div>
+      </div>
+    </div>
 </body>
 </html>
