@@ -31,15 +31,27 @@ class OrderController:
         return_object = {"message": "Commande traitée avec succès"}
 
         products = data.get('products', {})
-
-        for product in products:
-            if error_code != 200:
-                break
-            return_object, error_code = OrderController._process_product(product, return_object, error_code)
-        
-        if error_code == 200:
-            OrderController._saveorder(products)
-
+        if products:
+            for product in products:
+                if error_code != 200:
+                    break
+                return_object, error_code = OrderController._process_product(product, return_object, error_code)
+            
+            if error_code == 200:
+                print("save")
+                #OrderController._saveorder(products)                
+        else:
+            app.logger.error("No product sent")
+            print("No product sent")
+            error_code = 422
+            return_object = {
+                                "errors" : {
+                                    "product": {
+                                        "code": "Missing-fields",
+                                        "name": "La création d'une commande nécessite un produit"
+                                    }
+                                }
+                            }
         return return_object, error_code
     
     @classmethod
