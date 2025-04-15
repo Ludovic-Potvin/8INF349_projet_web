@@ -30,19 +30,31 @@ class OrderController:
         error_code = 200
         return_object = {"message": "Commande traitée avec succès"}
 
-        product = data.get('product', {})
+        products = data.get('products', {})
+
+        for product in products:
+            if error_code != 200:
+                break
+            return_object, error_code = OrderController._process_product(product, return_object, error_code)
+        
+        if error_code == 200:
+            OrderController._saveorder(products)
+
+        return return_object, error_code
+    
+    @classmethod
+    def _process_product(cls, product, return_object, error_code):
+        app.logger.info("Entered _process_product")
+        print("Entered _process_product")
         id = product.get('id', {})
         quantity = product.get('quantity', {})
         
-        if product and id and quantity and quantity >= 1 :
+        if id and quantity and quantity >= 1 :
             app.logger.info(f"Try to get product #{id} in database")
             print(f"Try to get product #{id} in database")
             product = ProductController.get_product_by_id(id)
             print("Fetch cleared")
-            if product and quantity <= product.in_stock:
-                print("Product in stock")
-                return_object, error_code = OrderController._saveorder(product, quantity)
-            else:
+            if quantity > product.in_stock:
                 app.logger.error("Product not in stock")
                 print("Product not in database")
                 error_code = 422
@@ -67,7 +79,7 @@ class OrderController:
                                 }
                             }
         return return_object, error_code
-    
+
     @classmethod
     def get_order(cls, order_id: int):
         app.logger.info("Entered get_order")
@@ -94,12 +106,20 @@ class OrderController:
         return order, error_code
     
     @classmethod
-    def _saveorder(cls, product, quantity_ordered):
+    def _saveorder(cls, products):
         app.logger.info("Entered save_order")
         print("Entered save_order")
         with Session() as session:
-            price = product.price * quantity_ordered
-            weight = product.weight * quantity_ordered
+            price = 0
+            weight = 0
+
+            for product in products:
+                price += product.price * product.quantity_ordered
+                weight += product.weight * product.quantity_ordered
+
+                product.in_stock -= product.quantity_ordered
+                session.add(product)
+
             if weight < 500:
                 shipping = 5
             elif weight > 500 and weight > 2000:
@@ -110,17 +130,11 @@ class OrderController:
             try:
                 # Création de la commande
                 new_order = Order(
-                    product_id=product.id,
-                    quantity = quantity_ordered,
+                    list_products = products,
                     total_price = price,
                     shipping_price = shipping
                 )
 
-                # Mise à jour du stock du produit
-                product.in_stock -= quantity_ordered
-
-                # Sauvegarde dans la base de données
-                session.add(product)
                 session.add(new_order)
                 session.commit()
 
