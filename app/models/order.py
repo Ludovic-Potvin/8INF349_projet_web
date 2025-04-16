@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, JSON
 from sqlalchemy.orm import relationship, validates
 
 from app.models.base import Base
@@ -15,10 +15,9 @@ class Order(Base):
     paid = Column(Boolean, nullable=True)
     shipping_price = Column(Integer, nullable=True)
 
-    product_id = Column(Integer, ForeignKey('product.id'), nullable=False)
-    quantity = Column(Integer, nullable=False)
+    list_products = Column(JSON, nullable=False)
 
-    product = relationship('Product', back_populates='orders')
+    #product = relationship('Product', back_populates='orders')
     shipping_info = relationship('ShippingInformation', backref='order', uselist=False, lazy=True)
     creditCard = relationship('CreditCard', backref='orders', uselist=False)
 
@@ -35,7 +34,7 @@ class Order(Base):
             'total_price_tax': self.total_price_tax,
             'transaction': self.transaction,
             'paid': self.paid,
-            'product': {"id": self.product_id, "quantity": self.quantity},
+            'products': self.list_products,
             'shipping_price': self.shipping_price,
             'id': self.id
         }

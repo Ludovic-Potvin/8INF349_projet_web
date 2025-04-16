@@ -38,8 +38,7 @@ class OrderController:
                 return_object, error_code = OrderController._process_product(product, return_object, error_code)
             
             if error_code == 200:
-                print("save")
-                #OrderController._saveorder(products)                
+                return_object, error_code = OrderController._saveorder(products, return_object, error_code)                
         else:
             app.logger.error("No product sent")
             print("No product sent")
@@ -118,18 +117,19 @@ class OrderController:
         return order, error_code
     
     @classmethod
-    def _saveorder(cls, products):
+    def _saveorder(cls, products, return_object, error_code):
         app.logger.info("Entered save_order")
         print("Entered save_order")
         with Session() as session:
             price = 0
             weight = 0
 
-            for product in products:
-                price += product.price * product.quantity_ordered
-                weight += product.weight * product.quantity_ordered
+            for item in products:               
+                product = ProductController.get_product_by_id(item['id'])
+                price += product.price * item['quantity']
+                weight += product.weight * item['quantity']
 
-                product.in_stock -= product.quantity_ordered
+                product.in_stock -= item['quantity']
                 session.add(product)
 
             if weight < 500:
