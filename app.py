@@ -6,4 +6,4 @@ app = create_app()
 init_db()
 
 if __name__ == '__main__':
-    app.run(use_reloader=False)
+    app.run(use_reloader=False, host="0.0.0.0", port=5000)

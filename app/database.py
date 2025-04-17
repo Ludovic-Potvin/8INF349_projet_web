@@ -1,18 +1,27 @@
+import os
+import re
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from config import Config
 from app.models.order import Order
 from app.models.shipping_information import ShippingInformation
-from app.models.credit_card import CreditCard
 from app.models.products import Product
 import urllib.request
 from app.models.base import Base
 import json
 
+DB_HOST = os.getenv('DB_HOST')
+DB_PORT = os.getenv('DB_PORT')
+DB_USER = os.getenv('DB_USER')
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+DB_NAME = os.getenv('DB_NAME')
+
+DATABASE_URL = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 # Create engine
-engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+engine = create_engine(DATABASE_URL)
 
 # Create Session
 Session = sessionmaker(bind=engine)
@@ -41,7 +50,8 @@ def _populate_db(session):
     data = _fetch_initial_data()
     try:
         for product in data.get('products', []):
-            new_product = Product(**product)
+            sanitized_product = _sanitize_product(product)
+            new_product = Product(**sanitized_product)
             session.add(new_product)
     except TypeError as e:
         print(f"Failed to populate database, a key is missing: {e}")
@@ -56,6 +66,18 @@ def _fetch_initial_data() -> dict:
     except Exception as e:
         print(f"Error fetching data: {e}")
         return {}
+
+def _sanitize_product(product):
+    sanitized_product = product
+
+    # description
+    sanitized_product['description'] = re.sub(
+        r'[\x00-\x1F\x7F]', '', product['description'])
+
+    # in_stock
+    sanitized_product['in_stock'] = 50 if product['in_stock'] else 0
+
+    return sanitized_product
 
 def _populate_order(session):
     new_shipping_info = ShippingInformation(
