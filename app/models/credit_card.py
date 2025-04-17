@@ -5,7 +5,7 @@ from app.models.base import Base
 
 
 class CreditCard(Base):
-    __tablename__ = 'CreditCard'
+    __tablename__ = 'credit_card'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
