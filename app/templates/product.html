@@ -3,7 +3,6 @@
 {% block content %}
     <div class="card m-4">
         <h5 class="card-header">{{ product.name }}</h5>
-        <!--<img src="{{ product.image }}" class="card-img-top" alt="{{ product.image }}">-->
         <div class="card-body">
           <h5 class="card-title">{{product.price}} $</h5>
           <p class="card-text"><small class="text-body-secondary">{{ product.type }}</small></p>
@@ -28,11 +27,11 @@
               let data = {};
       
               formData.forEach((value, key) => {
-                  data[key] = value;
+                  data[key] = parseInt(value, 10);;
               });
               data = { product: data };
               console.log("Sending JSON:", data);
-              const response = await fetch('/order/panier/', {
+              const response = await fetch('/order/', {
                   method: 'POST',
                   headers: {
                       'Content-Type': 'application/json'

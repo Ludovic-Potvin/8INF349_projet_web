@@ -30,8 +30,8 @@ class OrderController:
         return_object = {"message": "Commande traitée avec succès"}
 
         product = data.get('product', {})
-        id = int(product.get('id', {}))
-        quantity = int(product.get('quantity', {}))
+        id = product.get('id', -1)
+        quantity = product.get('quantity', -1)
         
         if product and id and quantity and quantity >= 1 :
             app.logger.info(f"Try to get product #{id} in database")
@@ -126,7 +126,7 @@ class OrderController:
                 app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
 
                 try:
-                    location = url_for('order.get_order', order_id=new_order.id, _external=True)
+                    location = url_for('page.get_panier', order_id=new_order.id, _external=True)
                 except Exception as e:
                     location = f"http://127.0.0.1:5000/order/{new_order.id}"
 
@@ -180,8 +180,6 @@ class OrderController:
         
         email = order_data.get('email')
         shipping_data = order_data.get('shipping_information')
-        print(email)
-        print(shipping_data)
         if shipping_data is None or  email is None:
             print("missing-fields")
             error_code = 422
@@ -295,27 +293,24 @@ class OrderController:
         if(error_code == 302):
             total = order.total_price_tax + order.shipping_price
             response = self.make_payment(credit_card, int(total))
-            print("eeeeee", response)
             if response.status_code != 200:
-                print("hello")
                 return response.json, response.status_code
             with Session() as session:
                 try:
-                    print("here")
                     if order.creditCard:
                         order.creditCard.name = credit_card.get("name")
                         order.creditCard.number = credit_card.get("number")
-                        order.creditCard.expiration_year = int(credit_card.get("expiration_year"))
+                        order.creditCard.expiration_year = credit_card.get("expiration_year")
                         order.creditCard.cvv = credit_card.get("cvv")
-                        order.creditCard.exp_month = int(credit_card.get("exp_month"))
+                        order.creditCard.exp_month = credit_card.get("exp_month")
                     else:
                         # If the credit card doesn't exist, create a new one
                         credit_card = CreditCard(
                             name=credit_card['name'],
                             number=credit_card['number'],
-                            expiration_year=int(credit_card['expiration_year']),
+                            expiration_year=credit_card['expiration_year'],
                             cvv=credit_card['cvv'],
-                            exp_month=int(credit_card['expiration_month']),
+                            exp_month=credit_card['expiration_month'],
                             order_id=order.id
                         )
                         session.add(credit_card)

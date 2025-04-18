@@ -6,7 +6,7 @@
         {% for product in products %}
             <li class="list-group-item">
                 {{ product.name }}
-                <a type="button" class="btn btn-primary" href="/products/{{ product.id }}">Voir</a>
+                <a type="button" class="btn btn-primary" href="/page/products/{{ product.id }}">Voir</a>
             </li>
         {% endfor %}
     </ul>

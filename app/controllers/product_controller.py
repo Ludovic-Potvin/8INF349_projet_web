@@ -12,11 +12,11 @@ class ProductController(object):
         """Return a list of products"""
         with Session() as session:
             try:
-                products = session.query(Product).all()
-                if products is None:
+                products_list = session.query(Product).all()
+                if products_list is None:
                     abort(404, message="No products were found")
                 products_list = []
-                for product in products:
+                for product in products_list:
                     products_list.append(product.to_dict())
                 #The following code will also work but I don't find it clear enough.
                 #To see how this was done, look at the documentation.
@@ -30,7 +30,7 @@ class ProductController(object):
                     abort(500, "An unexpected server error happened")
             finally:
                 session.close()
-        return products
+        return products_list
 
     @classmethod
     def get_product_by_id(cls, product_id: int) -> Product | None:
