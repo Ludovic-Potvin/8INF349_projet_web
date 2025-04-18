@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+{% block title %}Confirmation{% endblock %}
+{% block content %}
+<div class="container mt-3">
+    <div class="row">
+      <div class="col-2"></div>
+      <div class="col-4">
+        {%  if order.paid %}
+          <h4 class="text-success">Commande réussie</h4>
+        {% else %}
+          <h4 class="text-danger">Commande incomplète</h4>
+        {% endif %}
+      </div>
+      <div class="col-4">
+        {{ order.transaction }}
+      </div>
+      <div class="col-2">
+      </div>
+    </div>
+    <div class="row text-info bg-dark">
+      <div class="col-8">
+        <h3>Produit</h3>
+      </div>
+      <div class="col-2">
+        <h3> Quantité</h3>
+      </div>
+      <div class="col-2">
+        <h3> Prix</h3>
+      </div>
+    </div>
+    <!-- to - do changes for multiple products-->
+    <div class="row">
+        <div class="col-8">
+          {{ products.name }}
+        </div>
+        <div class="col-2">
+          {{ order.quantity }}
+        </div>
+        <div class="col-2">
+          {{ products.price }} $
+        </div>
+    </div>
+    <hr/>
+    <div class="row">
+      <div class="col-8"></div>
+      <div class="col-2">
+          Prix avec taxes
+      </div>
+      <div class="col-2 text-end">
+          {{ order.total_price_tax }} $
+      </div>
+  </div>
+  <div class="row">
+      <div class="col-8"></div>
+      <div class="col-2">
+          Prix transport
+      </div>
+      <div class="col-2 text-end">
+          {{ order.shipping_price }} $
+          <hr/>
+      </div>
+  </div>
+  <div class="row">
+      <div class="col-8"></div>
+      <div class="col-2 fw-bold">
+          Prix total
+      </div>
+      <div class="col-2 text-end">
+          {% set total = order.shipping_price + order.total_price_tax %}
+          {{ total }} $
+          <hr/>
+      </div>
+  </div>
+  
+</div>
+{% endblock %}

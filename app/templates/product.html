@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block title %}Produit{% endblock %}
+{% block content %}
+    <div class="card m-4">
+        <h5 class="card-header">{{ product.name }}</h5>
+        <div class="card-body">
+          <h5 class="card-title">{{product.price}} $</h5>
+          <p class="card-text"><small class="text-body-secondary">{{ product.type }}</small></p>
+          <p class="card-text">{{ product.description }}</p>
+          <form id="orderFormulaire">
+            <input type="hidden" name="id" value="{{ product.id }}">
+            {% if product.in_stock != 0 %}
+            <input type="number" name="quantity" min="1" max="{{ product.in_stock }}" value="1">
+            <button class="btn btn-primary" type="submit" id="buttonSubmit">Ajouter au panier</button>
+            {% else %}
+              <input type="number" name="quantity" min="1" max="{{ product.in_stock }}" value="0" disabled>
+              <button class="btn btn-primary" type="button" disabled>Rupture de stock</button>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+      <script>
+        document.getElementById('orderFormulaire').addEventListener('submit', async function (e) {
+              e.preventDefault()
+      
+              const formData = new FormData(this);
+              let data = {};
+      
+              formData.forEach((value, key) => {
+                  data[key] = parseInt(value, 10);;
+              });
+              data = { product: data };
+              console.log("Sending JSON:", data);
+              const response = await fetch('/order/', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(data)
+              });
+      
+              const result = await response.json();
+              console.log(result);
+              if (response.ok && result.location) {
+                window.location.href = result.location;
+              }
+              else if(result.errors) {
+                alert(result.errors.product.code + "\n" + result.errors.product.name)
+              }
+          });
+      </script>
+      </html>
+{% endblock %}

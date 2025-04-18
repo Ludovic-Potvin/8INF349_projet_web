@@ -1,6 +1,7 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, render_template, jsonify
 import app
 from app.controllers.order_controller import OrderController
+from app.controllers.product_controller import ProductController
 
 order = Blueprint('order', __name__, url_prefix='/order')
 
@@ -12,6 +13,12 @@ def post_order():
     return_object, error_code = OrderController.process_order(data)
     return return_object, error_code
 
+@order.route('/<int:id>', methods=['PUT'])
+def order_update(id):
+    data = request.get_json()
+    return OrderController.update(id, data)
+
+
 @order.route('/<int:order_id>', methods=['GET'])
 def get_order(order_id: int):
     app.logger.info("Found route get_order")
@@ -19,8 +26,3 @@ def get_order(order_id: int):
     
     return_object, error_code = OrderController.get_order(order_id)
     return return_object.to_dict(), error_code
-
-@order.route('/<int:id>', methods=['PUT'])
-def order_update(id):
-    data = request.get_json()
-    return OrderController.update(id, data)
