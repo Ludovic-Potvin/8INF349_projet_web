@@ -1,3 +1,5 @@
+from sqlalchemy.ext.mypy.infer import infer_type_from_right_hand_nameexpr
+
 import app
 from app.controllers.product_controller import ProductController
 from flask import abort
@@ -92,7 +94,11 @@ class OrderController:
     
     @classmethod
     def get_order(cls, order_id: int):
-        #TODO Jeremie check redis before the database
+        #Check if the order is in redis
+        cached_order = redis.get(order_id)
+        if cached_order:
+            return cached_order
+
         app.logger.info("Entered get_order")
         print("Entered get_order")
         with Session() as session:
@@ -114,6 +120,9 @@ class OrderController:
                     abort(500, "An unexpected server error happened")
             finally:
                 session.close()
+
+        #put the order in redis after it was fetched from postgesql
+        redis.set(order_id, order)
         return order, error_code
     
     @classmethod
@@ -360,10 +369,9 @@ class OrderController:
                     session.commit()
                     app.logger.info("update_order_card did")
                     error_code = 200
-                    #TODO Jeremie
-                    #TODO after the payment has been done and the data updated in postgres
-                    #TODO we must save it in redis
                     return_object = order.to_dict()
+
+                    redis.set(order.id, return_object)
                 finally:
                     session.close()
         return return_object, error_code
