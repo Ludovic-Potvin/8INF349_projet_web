@@ -12,11 +12,11 @@ class ProductController(object):
         """Return a list of products"""
         with Session() as session:
             try:
-                products_list = session.query(Product).all()
-                if products_list is None:
+                products = session.query(Product).all()
+                if products is None:
                     abort(404, message="No products were found")
                 products_list = []
-                for product in products_list:
+                for product in products:
                     products_list.append(product.to_dict())
                 #The following code will also work but I don't find it clear enough.
                 #To see how this was done, look at the documentation.
