@@ -1,5 +1,3 @@
-from sqlalchemy.ext.mypy.infer import infer_type_from_right_hand_nameexpr
-
 import app
 from app.controllers.product_controller import ProductController
 from flask import abort
