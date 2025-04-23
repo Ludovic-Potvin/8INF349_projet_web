@@ -18,7 +18,7 @@ def get_product_page(product_id: int):
 
 @page.route('/panier/<int:panier_id>', methods=['GET'])
 def get_panier(panier_id: int):
-    #products = get_panier(panier_id)
+    products = get_panier(panier_id)
     return render_template('panier.html')
 
 @page.route('/shipping_form/<int:id>', methods=['GET'])
@@ -33,5 +33,5 @@ def paiement_form(id: int):
 @page.route('/confirmation/<int:id>', methods=['GET'])
 def confirmation(id: int):
     return_object, error_code = OrderController.get_order(id)
-    products = [ProductController.get_product_by_id(id) for id in return_object.products]
+    products = [ProductController.get_product_by_id(product_id) for product_id in return_object.product_links]
     return render_template('confirmation.html', id=id, order=return_object, products=products), error_code
