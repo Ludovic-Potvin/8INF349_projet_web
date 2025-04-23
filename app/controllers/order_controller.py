@@ -21,7 +21,6 @@ class OrderController:
             "amount_charged": amount_charged
         }
         response = requests.post(url, json=payload)
-
         return response
 
     @classmethod
@@ -30,7 +29,7 @@ class OrderController:
         print("Entered process_order")
         error_code = 200
         return_object = {"message": "Commande traitée avec succès"}
-
+        
         products = data.get('products', {})
 
         if OrderController._check_liste(products):
@@ -180,11 +179,11 @@ class OrderController:
                 app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
 
                 try:
-                    location = url_for('order.get_order', order_id=new_order.id, _external=True)
+                    location = url_for('page.get_panier', order_id=new_order.id, _external=True)
                 except Exception as e:
                     location = f"http://127.0.0.1:5000/order/{new_order.id}"
 
-                return_object = "Location : " + location
+                return_object =  {"location": location}
                 error_code = 201
             except Exception as e:
                 print(f"An error occurred: {str(e)}")
@@ -234,7 +233,6 @@ class OrderController:
         
         email = order_data.get('email')
         shipping_data = order_data.get('shipping_information')
-        
         if shipping_data is None or  email is None:
             print("missing-fields")
             error_code = 422
@@ -306,7 +304,6 @@ class OrderController:
     #Description: Only update the credit card info
     @classmethod
     def update_order_card(self, id, data):
-        app.logger.info("update_order_card")
         order, error_code = self.get_order(id)
 
         credit_card = data.get('credit_card')
@@ -345,17 +342,18 @@ class OrderController:
                     }
                 }
             }
-
+        print(error_code)
         if(error_code == 302):
             total = order.total_price_tax + order.shipping_price
-            response = self.make_payment(credit_card, total)
+            response = self.make_payment(credit_card, int(total))
+            print(response)
             if response.status_code != 200:
                 return response.json, response.status_code
             with Session() as session:
                 try:
                     if order.creditCard:
                         order.creditCard.name = credit_card.get("name")
-                        order.creditCard.number = credit_card.get("number")
+                        order.creditCard.number = credit_card.get("number").replace(" ", "")[:12]
                         order.creditCard.expiration_year = credit_card.get("expiration_year")
                         order.creditCard.cvv = credit_card.get("cvv")
                         order.creditCard.exp_month = credit_card.get("exp_month")
@@ -363,7 +361,7 @@ class OrderController:
                         # If the credit card doesn't exist, create a new one
                         credit_card = CreditCard(
                             name=credit_card['name'],
-                            number=credit_card['number'],
+                            number=credit_card['number'].replace(" ", "")[:12],
                             expiration_year=credit_card['expiration_year'],
                             cvv=credit_card['cvv'],
                             exp_month=credit_card['expiration_month'],

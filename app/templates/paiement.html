@@ -1,0 +1,103 @@
+{% extends "layout.html" %}
+{% block title %}Paiement{% endblock %}
+{% block content %}
+    <h2 class="text-center">Paiement</h2>
+    
+    <form class="m-3" id="paiementFormulaire">
+        <div class="container">
+            <div class="row">
+                <label for="name" class="form-label">Nom sur la carte:</label>
+                <input class="form-control" type="text" id="name" name="name" required>
+            </div>
+            <div class="row">
+                <label for="number" class="form-label">Numéro de la carte:</label>
+                <input class="form-control" type="text" id="number" name="number" required pattern="^\d{4}( \d{4}){3}$">
+            </div>
+            <div class="row">
+                <label for="Date d'expiration" class="form-label">Expiration Month:</label>
+                <input class="form-control" type="number" id="expiration_month" name="expiration_month" min="1" max="12" required>
+            </div>
+            <div class="row">
+                <label for="expiration_year" class="form-label">Annee d'expiration:</label>
+                <input class="form-control" type="number" id="expiration_year" name="expiration_year" required pattern="^\d{1,4}$">
+            </div>
+            <div class="row">
+                <label for="cvv" class="form-label">CVV:</label>
+                <input class="form-control" type="text" id="cvv" name="cvv" required pattern="^\d{1,3}$">
+            </div>
+            <div class="row">
+                <div class="col-8"></div>
+                <div class="col-2">
+                    Prix avec taxes
+                </div>
+                <div class="col-2 text-end">
+                    {{ order.total_price_tax }} $
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-8"></div>
+                <div class="col-2">
+                    Prix transport
+                </div>
+                <div class="col-2 text-end">
+                    {{ order.shipping_price }} $
+                    <hr/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-8"></div>
+                <div class="col-2 fw-bold">
+                    Prix total
+                </div>
+                <div class="col-2 text-end">
+                    {% set total = order.shipping_price + order.total_price_tax %}
+                    {{ total }} $
+                    <hr/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-10"></div>
+                <div class="col-2">
+                    <button class="btn btn-info" type="submit">Procédé au paiement</button>
+                </div>
+            </div>
+        </div>
+        
+    </form>
+<script>
+    document.getElementById('paiementFormulaire').addEventListener('submit', async function (e) {
+        e.preventDefault()
+
+        const formData = new FormData(this);
+        let data = {};
+        const shipping_data = {};
+        formData.forEach((value, key) => {
+            if (['expiration_month', 'expiration_year'].includes(key)) {
+                data[key] = parseInt(value, 10);
+            }
+            else{
+                data[key] = value;
+            }
+        });
+        data = { credit_card: data };
+        console.log("Sending JSON:", JSON.stringify(data));
+
+        const response = await fetch('/order/{{ id }}', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        console.log(result);
+        if(result.errors) {
+          alert(result.errors.order.code + "\n" + result.errors.order.name)
+        }
+        else if (response.ok) {
+            window.location.href = "/page/confirmation/{{ id }}";
+        }
+    });
+</script>
+{% endblock %}

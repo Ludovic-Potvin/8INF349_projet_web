@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+{% block title %}Formulaire d'addresse{% endblock %}
+{% block content %}
+    <form class="mb-3" id="shippingFormulaire">
+        <div class="mb-3">
+            <label for="email" class="form-label">Courriel:</label>
+            <input class="form-control" type="text" id="email" name="email" required>
+        </div>
+        <div class="mb-3">
+            <label for="country" class="form-label">Pays:</label>
+            <input class="form-control" type="text" id="country" name="country" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="address" class="form-label">Addresse:</label>
+            <input class="form-control" type="text" id="address" name="address" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="postal_code" class="form-label">Code Postal:</label>
+            <input class="form-control" type="text" id="postal_code" name="postal_code" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="city" class="form-label">Ville:</label>
+            <input class="form-control" type="text" id="city" name="city" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="province" class="form-label">Province:</label>
+            <input class="form-control" type="text" id="province" name="province" required>
+        </div>
+
+        <div>
+            <button class="btn btn-info" type="submit">Submit</button>
+        </div>
+    </form>
+<script>
+    document.getElementById('shippingFormulaire').addEventListener('submit', async function (e) {
+        e.preventDefault()
+
+        const formData = new FormData(this);
+        let data = {};
+        const shipping_data = {};
+        formData.forEach((value, key) => {
+            if(key != "email") {
+                shipping_data[key] = value;
+            }
+            else {
+                data[key] = value;
+            }
+        });
+        data = { order: {...data, shipping_information: shipping_data } };
+        console.log("Sending JSON:", data);
+
+        const response = await fetch('/order/{{ id }}', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        console.log(result);
+        if(result.errors) {
+          alert(result.errors.product.code + "\n" + result.errors.product.name)
+        }
+        else if (response.ok) {
+          window.location.href = "/page/paiement/{{ id }}";
+        }
+    });
+</script>
+
+{% endblock %}

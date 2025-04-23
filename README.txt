@@ -2,6 +2,17 @@
 
 ## Setup Instructions
 
+## Using Docker
+1. **Build the image**
+```bash
+    docker build -t flask-app .
+```
+2. **run the container**
+```bash
+    docker run -p 5000:5000 flask-app
+```
+
+## Without Docker
 1. **Clone the repository**
 ssh:
 ```bash
