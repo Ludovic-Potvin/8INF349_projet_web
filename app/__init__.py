@@ -5,7 +5,7 @@ import logging.config
 from flask import Flask
 
 from config import Config
-from app.routes import product_route, order_route
+from app.routes import product_route, order_route, base_route, interface_route
 
 logger = logging.getLogger("app")
 
@@ -26,8 +26,9 @@ def create_app():
     setup_logging(Config.LOGGER_CONFIG_FILE, Config.LOG_DIR)
 
     app = Flask(__name__)
-    app.config.from_object(Config)
 
+    app.register_blueprint(base_route.base)
+    app.register_blueprint(interface_route.page)
     app.register_blueprint(product_route.products)
     app.register_blueprint(order_route.order)
 
