@@ -16,7 +16,7 @@ class Product(Base):
     price = Column(Float, nullable=False)
     in_stock = Column(Integer, nullable=False)
 
-    orders = relationship('Order', back_populates='product')
+    order_links = relationship('OrderProduct', back_populates='product')
 
     def __repr__(self):
         return f'<Product {self.name}>'

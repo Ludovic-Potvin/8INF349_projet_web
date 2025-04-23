@@ -36,7 +36,7 @@ def init_db():
                 _populate_db(session)
                 session.commit()
             if not session.query(Order).first():
-                _populate_order(session)
+                _populate_order(session)                
             else:
                 print("Using existing database")
 
@@ -94,8 +94,6 @@ def _populate_order(session):
     transaction="txn_123456",
     paid=True,
     shipping_price=10,
-    product_id=1,
-    quantity=1,
     shipping_info = new_shipping_info,
     )
     session.add(new_order)

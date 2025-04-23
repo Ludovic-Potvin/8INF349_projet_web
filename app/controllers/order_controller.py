@@ -7,6 +7,7 @@ import json
 import requests
 import app
 from app.models.order import Order
+from app.models.order_product import OrderProduct
 from app.models.shipping_information import ShippingInformation
 from app.models.credit_card import CreditCard
 
@@ -28,24 +29,18 @@ class OrderController:
         print("Entered process_order")
         error_code = 200
         return_object = {"message": "Commande traitée avec succès"}
-
-        product = data.get('product', {})
-        id = product.get('id', -1)
-        quantity = product.get('quantity', -1)
         
-        if product and id and quantity and quantity >= 1 :
-            app.logger.info(f"Try to get product #{id} in database")
-            print(f"Try to get product #{id} in database")
-            product = ProductController.get_product_by_id(id)
-            print("Fetch cleared")
-            if product and quantity <= product.in_stock:
-                print("Product in stock")
-                return_object, error_code = OrderController._saveorder(product, quantity)
-            else:
-                app.logger.error("Product not in stock")
-                print("Product not in database")
-                error_code = 422
-                return_object = {
+        products = data.get('products', {})
+
+        if OrderController._check_liste(products):
+            if OrderController._check_products_in_bd(products):
+                if OrderController._check_inventory(products):
+                    return_object, error_code = OrderController._saveorder(products, return_object, error_code)
+                else:
+                    app.logger.error("Product not in stock")
+                    print("Product not in stock")
+                    error_code = 422
+                    return_object = {
                                     "errors" : {
                                         "product": {
                                             "code": "Out-of-inventory",
@@ -53,6 +48,18 @@ class OrderController:
                                         }
                                     }
                                 }
+            else:
+                app.logger.error("No product sent")
+                print("No product sent")
+                error_code = 422
+                return_object = {
+                                "errors" : {
+                                    "product": {
+                                        "code": "Missing-fields",
+                                        "name": "La création d'une commande nécessite un produit"
+                                    }
+                                }
+                            }
         else:
             app.logger.error("No product sent")
             print("No product sent")
@@ -65,8 +72,45 @@ class OrderController:
                                     }
                                 }
                             }
+
+
+
         return return_object, error_code
     
+    @classmethod
+    def _check_liste(cls, products):
+        app.logger.info("Entered _check_liste")
+        print("Entered _check_liste")
+        if products:
+            return True
+        return False
+
+    @classmethod
+    def _check_products_in_bd(cls, products):
+        app.logger.info("Entered _check_products_in_bd")
+        print("Entered _check_products_in_bd")
+        for item in products:
+            id = item.get('id', {})
+            app.logger.info(f"Try to get product #{id} in database")
+            print(f"Try to get product #{id} in database")
+            product = ProductController.get_product_by_id(id)
+            if not product:
+                return False
+        return True
+
+    @classmethod
+    def _check_inventory(cls, products):
+        app.logger.info("Entered _check_inventory")
+        print("Entered _check_inventory")
+        for item in products:
+            id = item.get('id', {})
+            app.logger.info(f"Try to get product #{id} in database")
+            print(f"Try to get product #{id} in database")
+            product = ProductController.get_product_by_id(id)
+            if not item['quantity'] or item['quantity'] > product.in_stock:
+                return False
+        return True
+
     @classmethod
     def get_order(cls, order_id: int):
         app.logger.info("Entered get_order")
@@ -93,12 +137,21 @@ class OrderController:
         return order, error_code
     
     @classmethod
-    def _saveorder(cls, product, quantity_ordered):
+    def _saveorder(cls, products, return_object, error_code):
         app.logger.info("Entered save_order")
         print("Entered save_order")
         with Session() as session:
-            price = product.price * quantity_ordered
-            weight = product.weight * quantity_ordered
+            price = 0
+            weight = 0
+
+            for item in products:               
+                product = ProductController.get_product_by_id(item['id'])
+                price += product.price * item['quantity']
+                weight += product.weight * item['quantity']
+
+                product.in_stock -= item['quantity']
+                session.add(product)
+
             if weight < 500:
                 shipping = 5
             elif weight > 500 and weight > 2000:
@@ -107,22 +160,22 @@ class OrderController:
                 shipping = 25
 
             try:
-                # Création de la commande
                 new_order = Order(
-                    product_id=product.id,
-                    quantity = quantity_ordered,
                     total_price = price,
                     shipping_price = shipping
                 )
-
-                # Mise à jour du stock du produit
-                product.in_stock -= quantity_ordered
-
-                # Sauvegarde dans la base de données
-                session.add(product)
                 session.add(new_order)
-                session.commit()
+                session.flush()
+                
+                for item in products:
+                    order_product = OrderProduct(
+                        order_id=new_order.id,
+                        product_id=item['id'],
+                        quantity=item['quantity']
+                    )
+                    session.add(order_product)
 
+                session.commit()
                 app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
 
                 try:
