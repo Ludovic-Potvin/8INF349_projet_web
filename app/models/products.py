@@ -16,9 +16,10 @@ class Product(Base):
     price = Column(Float, nullable=False)
     in_stock = Column(Integer, nullable=False)
 
-    #orders = relationship('Order', back_populates='product')
+    order_links = relationship('OrderProduct', back_populates='product')
 
     def __repr__(self):
         return f'<Product {self.name}>'
     def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name is not 'orders'}
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'orders'}
+

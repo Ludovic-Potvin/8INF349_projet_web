@@ -7,6 +7,7 @@ import json
 import requests
 import app
 from app.models.order import Order
+from app.models.order_product import OrderProduct
 from app.models.shipping_information import ShippingInformation
 from app.models.credit_card import CreditCard
 
@@ -31,45 +32,16 @@ class OrderController:
         return_object = {"message": "Commande traitée avec succès"}
 
         products = data.get('products', {})
-        if products:
-            for product in products:
-                if error_code != 200:
-                    break
-                return_object, error_code = OrderController._process_product(product, return_object, error_code)
-            
-            if error_code == 200:
-                return_object, error_code = OrderController._saveorder(products, return_object, error_code)                
-        else:
-            app.logger.error("No product sent")
-            print("No product sent")
-            error_code = 422
-            return_object = {
-                                "errors" : {
-                                    "product": {
-                                        "code": "Missing-fields",
-                                        "name": "La création d'une commande nécessite un produit"
-                                    }
-                                }
-                            }
-        return return_object, error_code
-    
-    @classmethod
-    def _process_product(cls, product, return_object, error_code):
-        app.logger.info("Entered _process_product")
-        print("Entered _process_product")
-        id = product.get('id', {})
-        quantity = product.get('quantity', {})
-        
-        if id and quantity and quantity >= 1 :
-            app.logger.info(f"Try to get product #{id} in database")
-            print(f"Try to get product #{id} in database")
-            product = ProductController.get_product_by_id(id)
-            print("Fetch cleared")
-            if quantity > product.in_stock:
-                app.logger.error("Product not in stock")
-                print("Product not in database")
-                error_code = 422
-                return_object = {
+
+        if OrderController._check_liste(products):
+            if OrderController._check_products_in_bd(products):
+                if OrderController._check_inventory(products):
+                    return_object, error_code = OrderController._saveorder(products, return_object, error_code)
+                else:
+                    app.logger.error("Product not in stock")
+                    print("Product not in stock")
+                    error_code = 422
+                    return_object = {
                                     "errors" : {
                                         "product": {
                                             "code": "Out-of-inventory",
@@ -77,6 +49,18 @@ class OrderController:
                                         }
                                     }
                                 }
+            else:
+                app.logger.error("No product sent")
+                print("No product sent")
+                error_code = 422
+                return_object = {
+                                "errors" : {
+                                    "product": {
+                                        "code": "Missing-fields",
+                                        "name": "La création d'une commande nécessite un produit"
+                                    }
+                                }
+                            }
         else:
             app.logger.error("No product sent")
             print("No product sent")
@@ -89,7 +73,44 @@ class OrderController:
                                     }
                                 }
                             }
+
+
+
         return return_object, error_code
+    
+    @classmethod
+    def _check_liste(cls, products):
+        app.logger.info("Entered _check_liste")
+        print("Entered _check_liste")
+        if products:
+            return True
+        return False
+
+    @classmethod
+    def _check_products_in_bd(cls, products):
+        app.logger.info("Entered _check_products_in_bd")
+        print("Entered _check_products_in_bd")
+        for item in products:
+            id = item.get('id', {})
+            app.logger.info(f"Try to get product #{id} in database")
+            print(f"Try to get product #{id} in database")
+            product = ProductController.get_product_by_id(id)
+            if not product:
+                return False
+        return True
+
+    @classmethod
+    def _check_inventory(cls, products):
+        app.logger.info("Entered _check_inventory")
+        print("Entered _check_inventory")
+        for item in products:
+            id = item.get('id', {})
+            app.logger.info(f"Try to get product #{id} in database")
+            print(f"Try to get product #{id} in database")
+            product = ProductController.get_product_by_id(id)
+            if not item['quantity'] or item['quantity'] > product.in_stock:
+                return False
+        return True
 
     @classmethod
     def get_order(cls, order_id: int):
@@ -140,16 +161,22 @@ class OrderController:
                 shipping = 25
 
             try:
-                # Création de la commande
                 new_order = Order(
-                    list_products = products,
                     total_price = price,
                     shipping_price = shipping
                 )
-
                 session.add(new_order)
-                session.commit()
+                session.flush()
+                
+                for item in products:
+                    order_product = OrderProduct(
+                        order_id=new_order.id,
+                        product_id=item['id'],
+                        quantity=item['quantity']
+                    )
+                    session.add(order_product)
 
+                session.commit()
                 app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
 
                 try:
