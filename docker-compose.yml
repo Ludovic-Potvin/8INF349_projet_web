@@ -42,6 +42,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.worker
+    depends_on:
+      - redis
     environment:
       REDIS: redis
       REDIS_PORT: 6379
