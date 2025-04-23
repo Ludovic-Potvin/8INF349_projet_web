@@ -17,17 +17,20 @@ services:
     depends_on:
       - db
       - redis
+      - worker
     environment:
       DB_HOST: ${DB_HOST}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
+      REDIS: ${REDIS}
+      REDIS_PORT: ${REDIS_PORT}
     ports:
       - '5000:5000'
     links:
         - db
-        - redis
+        - worker
   redis:
     image: redis:5-alpine
     restart: always
@@ -35,5 +38,13 @@ services:
       - '6379:6379'
     expose:
       - '6379'
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      REDIS: redis
+      REDIS_PORT: 6379
+    command: python worker.py
 volumes:
   pgdata:

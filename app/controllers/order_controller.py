@@ -1,4 +1,6 @@
 import app
+import os
+import re
 from app.controllers.product_controller import ProductController
 from flask import abort
 from app.database import Session
@@ -6,24 +8,19 @@ from flask import abort, url_for, jsonify
 import json
 import requests
 import app
-import os
 from app.models.order import Order
 from app.models.shipping_information import ShippingInformation
 from app.models.credit_card import CreditCard
-
 from redis import Redis
 from rq import Queue, Worker
 
-DB_REDIS = os.getenv('DB_REDIS')
-DB_REDIS_PORT = os.getenv('DB_REDIS_PORT')
+DB_REDIS = os.getenv('REDIS')
+DB_REDIS_PORT = os.getenv('REDIS_PORT')
 
-redis = Redis.from_url(f'redis://{DB_REDIS}:{DB_REDIS_PORT}')
+redis_url = f"redis://{DB_REDIS}:{DB_REDIS_PORT}/0"
+redis = Redis.from_url(redis_url)
+
 queue = Queue(connection=redis)
-
-worker = Worker([queue], connection=redis)
-worker.work()
-
-
 
 class OrderController:
     @classmethod
