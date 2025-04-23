@@ -1,4 +1,6 @@
 import app
+import os
+import re
 from app.controllers.product_controller import ProductController
 from flask import abort
 from app.database import Session
@@ -10,8 +12,25 @@ from app.models.order import Order
 from app.models.order_product import OrderProduct
 from app.models.shipping_information import ShippingInformation
 from app.models.credit_card import CreditCard
+from redis import Redis
+from rq import Queue, Worker
+
+DB_REDIS = os.getenv('REDIS')
+DB_REDIS_PORT = os.getenv('REDIS_PORT')
+
+redis_url = f"redis://{DB_REDIS}:{DB_REDIS_PORT}/0"
+redis = Redis.from_url(redis_url)
+
+queue = Queue(connection=redis)
 
 class OrderController:
+    @classmethod
+    def verify_payment(cls, order_id):
+        payment_job = queue.fetch_job(order_id)
+        if payment_job.is_finished:
+            return payment_job.return_value #TODO change return param depending on the logic
+
+        return f"Le payment de la commande {order_id} n'est pas fini" #TODO change return param depending on the logic
 
     @classmethod
     def make_payment(cls, credit_card_information, amount_charged):
@@ -113,6 +132,11 @@ class OrderController:
 
     @classmethod
     def get_order(cls, order_id: int):
+        #Check if the order is in redis
+        cached_order = redis.get(order_id)
+        if cached_order:
+            return cached_order
+
         app.logger.info("Entered get_order")
         print("Entered get_order")
         with Session() as session:
@@ -134,6 +158,9 @@ class OrderController:
                     abort(500, "An unexpected server error happened")
             finally:
                 session.close()
+
+        #put the order in redis after it was fetched from postgesql
+        redis.set(order_id, order)
         return order, error_code
     
     @classmethod
@@ -306,6 +333,8 @@ class OrderController:
     def update_order_card(self, id, data):
         order, error_code = self.get_order(id)
 
+        #TODO ajouter la logique si la commande est en train de se faire payer...
+        #TODO voir la fonction "verify_payment"
         credit_card = data.get('credit_card')
         if not credit_card:
             app.logger.info("missing card")
@@ -345,8 +374,22 @@ class OrderController:
         print(error_code)
         if(error_code == 302):
             total = order.total_price_tax + order.shipping_price
+            response = self.make_payment(credit_card, total)
+            #TODO the make_payment should be done in the background
+            #TODO There should be a logic depending if the job is done or not see ""
+            #TODO Just right here, we should call the make payment method
+            #TODO after, the background job should call either the save card information or return the error<
+            #TODO if payment not done yet = return 202
+            #TODO if payment ok = save payment info
+            #TODO if payment fail = do not save payment info and we should tell the user but how I don't know
+            #TODO maybe the solution would be to put the failed payment attempt in a cache with a specific id(fp<order_id>)
+            # and before we get the product we check if the failed specific order is present and return the error message
+
+
+
             response = self.make_payment(credit_card, int(total))
             print(response)
+
             if response.status_code != 200:
                 return response.json, response.status_code
             with Session() as session:
@@ -369,12 +412,15 @@ class OrderController:
                         )
                         session.add(credit_card)
 
+
                     order.paid = True
                     session.add(instance=order)
                     session.commit()
                     app.logger.info("update_order_card did")
                     error_code = 200
                     return_object = order.to_dict()
+
+                    redis.set(order.id, return_object)
                 finally:
                     session.close()
         return return_object, error_code

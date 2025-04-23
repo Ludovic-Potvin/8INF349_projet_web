@@ -3,3 +3,6 @@ SQLAlchemy
 python-dotenv
 requests
 psycopg2
+redis
+rq
+
