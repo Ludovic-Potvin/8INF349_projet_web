@@ -205,12 +205,7 @@ class OrderController:
                 session.commit()
                 app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
 
-                try:
-                    location = url_for('page.get_panier', order_id=new_order.id, _external=True)
-                except Exception as e:
-                    location = f"http://127.0.0.1:5000/order/{new_order.id}"
-
-                return_object =  {"location": location}
+                return_object =  {"order_id": new_order.id}
                 error_code = 201
             except Exception as e:
                 print(f"An error occurred: {str(e)}")

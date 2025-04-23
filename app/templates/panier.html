@@ -15,6 +15,7 @@
           </div>
         </div>
         <!-- to - do changes for multiple products-->
+        <form id="panierForm">
         {% for product in products %}
         <div class="row">
             <div class="col-8">
@@ -26,41 +27,44 @@
             <div class="col-2">
               {{ product.price }} $
             </div>
+            <input type="hidden" name="products[{{ product.id }}][id]" value="{{ product.id }}">
+            <input type="hidden" name="products[{{ product.id }}][quantity]" value="{{ product.quantity }}">
           {% endfor %}
         </div>
         <hr/>
         <div class="row">
             <div class="col-10"></div>
             <div class="col-2">
-              <button type="submit"> Paiement </button>
+              <button class="btn btn-primary" type="submit" id="process"> Paiement </button>
             </div>
-        </div>
+          </div>
+        </form>
       </div>
     </div>
     <script>
-      document.getElementById('orderFormulaire').addEventListener('submit', async function (e) {
-            e.preventDefault()
-    
+      document.getElementById('panierForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
             const formData = new FormData(this);
             let data = {};
-            // ajouter pour chaque produit
             formData.forEach((value, key) => {
-                data[key] = parseInt(value, 10);;
+              // TODO
             });
-            data = { product: data };
-            console.log("Sending JSON:", data);
+            const data_json = { products: Object.values(data.products)  };
+            console.log("Sending JSON:", data_json);
+
             const response = await fetch('/order/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data_json)
             });
     
             const result = await response.json();
             console.log(result);
-            if (response.ok && result.location) {
-              window.location.href = url_for('page.shipping_form', id=order.id);
+            if (response.ok && result.new_order) {
+              window.location.href = url_for('page.shipping_form', id=result.new_order);
             }
             else if(result.errors) {
               alert(result.errors.product.code + "\n" + result.errors.product.name)
