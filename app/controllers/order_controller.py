@@ -293,13 +293,14 @@ class OrderController:
         if(error_code == 302):
             total = order.total_price_tax + order.shipping_price
             response = self.make_payment(credit_card, int(total))
+            print(response)
             if response.status_code != 200:
                 return response.json, response.status_code
             with Session() as session:
                 try:
                     if order.creditCard:
                         order.creditCard.name = credit_card.get("name")
-                        order.creditCard.number = credit_card.get("number")
+                        order.creditCard.number = credit_card.get("number").replace(" ", "")[:12]
                         order.creditCard.expiration_year = credit_card.get("expiration_year")
                         order.creditCard.cvv = credit_card.get("cvv")
                         order.creditCard.exp_month = credit_card.get("exp_month")
@@ -307,7 +308,7 @@ class OrderController:
                         # If the credit card doesn't exist, create a new one
                         credit_card = CreditCard(
                             name=credit_card['name'],
-                            number=credit_card['number'],
+                            number=credit_card['number'].replace(" ", "")[:12],
                             expiration_year=credit_card['expiration_year'],
                             cvv=credit_card['cvv'],
                             exp_month=credit_card['expiration_month'],
