@@ -15,44 +15,56 @@
           </div>
         </div>
         <!-- to - do changes for multiple products-->
+        {% for product in products %}
         <div class="row">
             <div class="col-8">
-              {{ products.name }}
+              {{ product.name }}
             </div>
             <div class="col-2">
-              {{ order.quantity }}
+              {{ product.quantity }}
             </div>
             <div class="col-2">
-              {{ products.price }} $
+              {{ product.price }} $
             </div>
+          {% endfor %}
         </div>
         <hr/>
         <div class="row">
-            <div class="col-8"></div>
-            <div class="col-2">
-                Prix
-            </div>
-            <div class="col-2">
-                {{ order.total_price }} $
-                <hr/>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-8"></div>
-            <div class="col-2">
-                Prix transport
-            </div>
-            <div class="col-2">
-                {{ order.shipping_price }} $
-                <hr/>
-            </div>
-        </div>
-        <div class="row">
             <div class="col-10"></div>
             <div class="col-2">
-                <a class="btn btn-info" href="{{ url_for('page.shipping_form', id=order.id) }}">Paiement</a>
+              <button type="submit"> Paiement </button>
             </div>
         </div>
       </div>
     </div>
+    <script>
+      document.getElementById('orderFormulaire').addEventListener('submit', async function (e) {
+            e.preventDefault()
+    
+            const formData = new FormData(this);
+            let data = {};
+            // ajouter pour chaque produit
+            formData.forEach((value, key) => {
+                data[key] = parseInt(value, 10);;
+            });
+            data = { product: data };
+            console.log("Sending JSON:", data);
+            const response = await fetch('/order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+    
+            const result = await response.json();
+            console.log(result);
+            if (response.ok && result.location) {
+              window.location.href = url_for('page.shipping_form', id=order.id);
+            }
+            else if(result.errors) {
+              alert(result.errors.product.code + "\n" + result.errors.product.name)
+            }
+        });
+    </script>
 {% endblock %}

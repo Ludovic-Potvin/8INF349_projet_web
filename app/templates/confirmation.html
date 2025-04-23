@@ -28,18 +28,19 @@
         <h3> Prix</h3>
       </div>
     </div>
-    <!-- to - do changes for multiple products-->
+    {% for product in products %}
     <div class="row">
         <div class="col-8">
-          {{ products.name }}
+          {{ product.name }}
         </div>
         <div class="col-2">
-          {{ order.quantity }}
+         
         </div>
         <div class="col-2">
           {{ products.price }} $
         </div>
     </div>
+    {% endfor %}
     <hr/>
     <div class="row">
       <div class="col-8"></div>
