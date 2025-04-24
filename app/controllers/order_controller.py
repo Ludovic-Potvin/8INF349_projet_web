@@ -43,18 +43,16 @@ class OrderController:
         return response
 
     @classmethod
-    def process_order(cls, data):
+    def process_order(cls, products):
         app.logger.info("Entered process_order")
         print("Entered process_order")
         error_code = 200
         return_object = {"message": "Commande traitée avec succès"}
-        
-        products = data.get('products', {})
 
-        if OrderController._check_liste(products):
-            if OrderController._check_products_in_bd(products):
-                if OrderController._check_inventory(products):
-                    return_object, error_code = OrderController._saveorder(products, return_object, error_code)
+        if products:
+            if cls._check_products_in_bd(products):
+                if cls._check_inventory(products):
+                    return_object, error_code = cls._saveorder(products, return_object, error_code)
                 else:
                     app.logger.error("Product not in stock")
                     print("Product not in stock")
@@ -95,14 +93,6 @@ class OrderController:
 
 
         return return_object, error_code
-    
-    @classmethod
-    def _check_liste(cls, products):
-        app.logger.info("Entered _check_liste")
-        print("Entered _check_liste")
-        if products:
-            return True
-        return False
 
     @classmethod
     def _check_products_in_bd(cls, products):
@@ -160,13 +150,11 @@ class OrderController:
                 session.close()
 
         #put the order in redis after it was fetched from postgesql
-        redis.set(order_id, order)
         return order, error_code
     
     @classmethod
     def _saveorder(cls, products, return_object, error_code):
         app.logger.info("Entered save_order")
-        print("Entered save_order")
         with Session() as session:
             price = 0
             weight = 0
@@ -193,7 +181,7 @@ class OrderController:
                 )
                 session.add(new_order)
                 session.flush()
-                
+
                 for item in products:
                     order_product = OrderProduct(
                         order_id=new_order.id,
@@ -205,12 +193,7 @@ class OrderController:
                 session.commit()
                 app.logger.info(f"Commande enregistrée avec succès : {new_order.id}")
 
-                try:
-                    location = url_for('page.get_panier', order_id=new_order.id, _external=True)
-                except Exception as e:
-                    location = f"http://127.0.0.1:5000/order/{new_order.id}"
-
-                return_object =  {"location": location}
+                return_object =  {"order_id": new_order.id}
                 error_code = 201
             except Exception as e:
                 print(f"An error occurred: {str(e)}")

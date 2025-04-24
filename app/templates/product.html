@@ -31,7 +31,7 @@
               });
               data = { product: data };
               console.log("Sending JSON:", data);
-              const response = await fetch('/order/', {
+              const response = await fetch('/page/panier/add', {
                   method: 'POST',
                   headers: {
                       'Content-Type': 'application/json'
@@ -40,12 +40,12 @@
               });
       
               const result = await response.json();
-              console.log(result);
-              if (response.ok && result.location) {
-                window.location.href = result.location;
+
+              if (result.localisation) {
+                window.location.href = result.localisation;
               }
               else if(result.errors) {
-                alert(result.errors.product.code + "\n" + result.errors.product.name)
+                alert(result.errors)
               }
           });
       </script>
