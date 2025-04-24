@@ -150,7 +150,6 @@ class OrderController:
                 session.close()
 
         #put the order in redis after it was fetched from postgesql
-        redis.set(order_id, order)
         return order, error_code
     
     @classmethod
