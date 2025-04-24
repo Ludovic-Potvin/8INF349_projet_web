@@ -34,10 +34,11 @@
           {{ product.name }}
         </div>
         <div class="col-2">
-         
+          {{ product.quantity }}
         </div>
         <div class="col-2">
-          {{ products.price }} $
+          {% set total_product = product.price * product.quantity %}
+          {{ total_product }} $
         </div>
     </div>
     {% endfor %}

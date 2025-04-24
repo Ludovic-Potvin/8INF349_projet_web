@@ -1,5 +1,4 @@
 from time import process_time_ns
-from tkinter.font import names
 
 import app
 import os
@@ -145,7 +144,7 @@ class OrderController:
         with Session() as session:
             try:
                 order = session.query(Order).filter(Order.id == order_id).first()
-                print(order)
+
                 print(f"Paid: {order.paid}")
                 print(f"Shipping Info: {order.shipping_info}")
                 print(f"Card Info: {order.creditCard}")
@@ -163,11 +162,9 @@ class OrderController:
             finally:
                 session.close()
 
-        #put the order in redis after it was fetched from postgesql
         if order.paid:
             print("SET IN REDIS")
             redis.set(order_id, json.dumps(order.to_dict()))
-
         return order, error_code
     
     @classmethod
@@ -329,12 +326,20 @@ class OrderController:
     @classmethod
     def update_order_card_before(self, id, data):
         order, error_code = self.get_order(id)
-        return_object = order.to_dict()
 
        #If the order is not in the cache, it is not paid...
         cached_order = redis.get(id)
         if cached_order:
-            return cached_order
+            error_code = 409
+            return_object = {
+                "errors": {
+                    "order": {
+                        "code": "processing",
+                        "name": "La transaction est déjà en cours de paiement"
+                        }
+                    }
+                }
+            return return_object, error_code
 
         credit_card = data.get('credit_card')
         if not credit_card:
@@ -348,6 +353,7 @@ class OrderController:
                         }
                     }
                 }
+            return return_object, error_code
         required_fields = ['name', 'number', 'expiration_year', 'cvv', 'expiration_month']
         missing_fields = [field for field in required_fields if not credit_card.get(field)]
         if missing_fields:
@@ -361,7 +367,8 @@ class OrderController:
                         }
                     }
                 }
-        if order.paid is True:
+            return return_object, error_code
+        if order.paid:
             app.logger.info("already paid")
             error_code = 422
             return_object = {
@@ -372,77 +379,59 @@ class OrderController:
                     }
                 }
             }
+            return return_object, error_code
+
         total = order.total_price_tax + order.shipping_price
-        print(id)
-        print(credit_card)
-        print(total)
-        #job = queue.enqueue(self.update_order_card_after, id, credit_card, total)
+        job = queue.enqueue(update_order_card_after, id, credit_card, total)
 
-        #Le self génère une erreur de conversion, le worker n'arrive pas à l'utiliser
-
-        #possible raison pq ça work pas d'après mes recherches
-        #2 Le worker n'a pas les information de connection a la bd
-        #3 Le worker n'a pas accès a la fonction, c'est pour ça qu'il n'arrive pas à l'utiliser.
-
-        job = queue.enqueue(this_is_a_test1, credit_card, total)
-
-        #With the current conf, the next line work
-        #job = queue.enqueue(this_is_a_test2, 200)
 
         return self.verify_payment(job.id)
-        #return error_code, return_object
 
     @classmethod
     def verify_payment(self, job_id):
-        payment_job = queue.fetch_job(job_id)
-        if payment_job.is_finished:
-            error_code = 200
-            return_object = { "location": url_for('page.confirmation',  id=payment_job.return_value["id"]) }
-            return return_object, error_code
-
         error_code = 202
-        return_object = {"location": url_for('page.process_panier', id=job_id)}
+        return_object = {"location": url_for('page.process', job_id=job_id)}
         return return_object, error_code
 
-    @classmethod
-    def update_order_card_after(self, id, credit_card, total):
-        order, error_code = self.get_order(id)
-        response = self.make_payment(credit_card, int(total))
 
-        if response.status_code != 200:
-            return response.json, response.status_code
-        with Session() as session:
-            try:
-                if order.creditCard:
-                    order.creditCard.name = credit_card.get("name")
-                    order.creditCard.number = credit_card.get("number").replace(" ", "")[:12]
-                    order.creditCard.expiration_year = credit_card.get("expiration_year")
-                    order.creditCard.cvv = credit_card.get("cvv")
-                    order.creditCard.exp_month = credit_card.get("exp_month")
-                else:
-                    # If the credit card doesn't exist, create a new one
-                    credit_card = CreditCard(
-                        name=credit_card['name'],
-                        number=credit_card['number'].replace(" ", "")[:12],
-                        expiration_year=credit_card['expiration_year'],
-                        cvv=credit_card['cvv'],
-                        exp_month=credit_card['expiration_month'],
-                        order_id=order.id
-                    )
-                    session.add(credit_card)
+def update_order_card_after(id, credit_card, total):
+    order, error_code = OrderController.get_order(id)
+    response = make_payment(credit_card, int(total))
+
+    if response.status_code != 200:
+        return response.json, response.status_code
+    with Session() as session:
+        try:
+            if order.creditCard:
+                order.creditCard.name = credit_card.get("name")
+                order.creditCard.number = credit_card.get("number").replace(" ", "")[:12]
+                order.creditCard.expiration_year = credit_card.get("expiration_year")
+                order.creditCard.cvv = credit_card.get("cvv")
+                order.creditCard.exp_month = credit_card.get("exp_month")
+            else:
+                # If the credit card doesn't exist, create a new one
+                credit_card = CreditCard(
+                    name=credit_card['name'],
+                    number=credit_card['number'].replace(" ", "")[:12],
+                    expiration_year=credit_card['expiration_year'],
+                    cvv=credit_card['cvv'],
+                    exp_month=credit_card['expiration_month'],
+                    order_id=order.id
+                )
+                session.add(credit_card)
 
 
-                order.paid = True
-                session.add(instance=order)
-                session.commit()
-                app.logger.info("update_order_card did")
-                error_code = 200
-                return_object = order.to_dict()
+            order.paid = True
+            session.add(instance=order)
+            session.commit()
+            app.logger.info("update_order_card did")
+            error_code = 200
+            return_object = order.to_dict()
 
-                redis.set(order.id, json.dumps(return_object))
-            finally:
-                session.close()
-        return return_object, error_code
+            #redis.set(order.id, json.dumps(return_object))
+        finally:
+            session.close()
+    return return_object, error_code
 
 def order_to_object(data):
     order_data = json.loads(data)
