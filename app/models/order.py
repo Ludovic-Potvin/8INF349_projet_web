@@ -21,7 +21,9 @@ class Order(Base):
 
 
     def __repr__(self):
-        return f'<Order {self.email}>'
+        return (f'<Email: {self.email},ID:{self.id},TRANSAC{self.transaction},'
+                f'TOTAL PRICE{self.total_price},TOTALPRICETAX{self.total_price_tax},'
+                f'PAID:{self.paid},SHIPPINGPRICE{self.shipping_price}>')
     
     def to_dict(self):
         return {
