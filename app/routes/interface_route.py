@@ -67,7 +67,7 @@ def confirmation(id: int):
         ]
         return render_template('confirmation.html', id=id, order=return_object, products=products), error_code
     else:
-        return render_template('error.html', code=return_object['order']['code'],  code=return_object['order']['message'], error_code=error_code)
+        return render_template('error.html', code=return_object['order']['code'],  message=return_object['order']['message'], error_code=error_code)
 
 @page.route('/process/<string:job_id>', methods=['GET'])
 def process(job_id: str):
@@ -81,7 +81,7 @@ def process(job_id: str):
             if error_code == 200:
                 return redirect(url_for('page.confirmation',  id=result['id']))
             else:
-                return render_template('error.html', code=result['credit_card']['code'],  code=result['credit_card']['message'], error_code=error_code)
+                return render_template('error.html', code=result['credit_card']['code'],  message=result['credit_card']['message'], error_code=error_code)
 
 @page.route('/panier/add', methods=['POST'])
 def add_to_panier():
