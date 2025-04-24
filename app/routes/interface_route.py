@@ -55,17 +55,30 @@ def paiement_form(id: int):
 
 @page.route('/confirmation/<int:id>', methods=['GET'])
 def confirmation(id: int):
-    return_object, error_code = OrderController.get_order(id)
-    products = [ProductController.get_product_by_id(product_id) for product_id in return_object.product_links]
-    return render_template('confirmation.html', id=id, order=return_object, products=products), error_code
-
-@page.route('/process/<int:job_id>', methods=['GET'])
-def process(job_id: int):
-    job = queue.fetch_job(job_id)
-    if not job.is_finished:
-        return render_template('process.html'), 202
+    return_object, error_code = OrderController.get_order(id) 
+    if error_code == 302:
+        products = [
+            {
+                "id": link.product.id,
+                "name": link.product.name,
+                "price": link.product.price,
+                "quantity": link.quantity
+            }
+            for link in return_object.product_links
+        ]
+        return render_template('confirmation.html', id=id, order=return_object, products=products), error_code
     else:
-        return job.result
+        return render_template('error.html', errors=return_object, error_code=error_code)
+
+@page.route('/process/<string:job_id>', methods=['GET'])
+def process(job_id: str):
+    job = queue.fetch_job(job_id)
+    if job and not job.is_finished:
+        return render_template('processing.html'), 202
+    else:
+        print(job.return_value())
+        result, error_code = job.return_value()
+        return redirect(url_for('page.confirmation',  id=result['id']))
 
 @page.route('/panier/add', methods=['POST'])
 def add_to_panier():
