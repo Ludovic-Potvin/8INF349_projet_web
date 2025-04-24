@@ -43,18 +43,16 @@ class OrderController:
         return response
 
     @classmethod
-    def process_order(cls, data):
+    def process_order(cls, products):
         app.logger.info("Entered process_order")
         print("Entered process_order")
         error_code = 200
         return_object = {"message": "Commande traitée avec succès"}
-        
-        products = data.get('products', {})
 
-        if OrderController._check_liste(products):
-            if OrderController._check_products_in_bd(products):
-                if OrderController._check_inventory(products):
-                    return_object, error_code = OrderController._saveorder(products, return_object, error_code)
+        if products:
+            if cls._check_products_in_bd(products):
+                if cls._check_inventory(products):
+                    return_object, error_code = cls._saveorder(products, return_object, error_code)
                 else:
                     app.logger.error("Product not in stock")
                     print("Product not in stock")
@@ -95,14 +93,6 @@ class OrderController:
 
 
         return return_object, error_code
-    
-    @classmethod
-    def _check_liste(cls, products):
-        app.logger.info("Entered _check_liste")
-        print("Entered _check_liste")
-        if products:
-            return True
-        return False
 
     @classmethod
     def _check_products_in_bd(cls, products):
@@ -166,7 +156,6 @@ class OrderController:
     @classmethod
     def _saveorder(cls, products, return_object, error_code):
         app.logger.info("Entered save_order")
-        print("Entered save_order")
         with Session() as session:
             price = 0
             weight = 0
@@ -193,7 +182,7 @@ class OrderController:
                 )
                 session.add(new_order)
                 session.flush()
-                
+
                 for item in products:
                     order_product = OrderProduct(
                         order_id=new_order.id,

@@ -9,8 +9,8 @@ order = Blueprint('order', __name__, url_prefix='/order')
 def post_order():
     app.logger.info("Found route post_order")
     data = request.get_json()
-
-    return_object, error_code = OrderController.process_order(data)
+    products = data.get('products', {})
+    return_object, error_code = OrderController.process_order(products)
     return return_object, error_code
 
 @order.route('/<int:id>', methods=['PUT'])

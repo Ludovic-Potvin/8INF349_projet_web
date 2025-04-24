@@ -15,7 +15,8 @@
           </div>
         </div>
         <!-- to - do changes for multiple products-->
-        <form id="panierForm">
+        <form id="panierForm" method="post" action="/page/panier">
+          <input type="hidden" name="panier_id" value="{{ panier_id }}">
         {% for product in products %}
         <div class="row">
             <div class="col-8">
@@ -27,8 +28,6 @@
             <div class="col-2">
               {{ product.price }} $
             </div>
-            <input type="hidden" name="products[{{ product.id }}][id]" value="{{ product.id }}">
-            <input type="hidden" name="products[{{ product.id }}][quantity]" value="{{ product.quantity }}">
           {% endfor %}
         </div>
         <hr/>
@@ -41,34 +40,4 @@
         </form>
       </div>
     </div>
-    <script>
-      document.getElementById('panierForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-            let data = {};
-            formData.forEach((value, key) => {
-              // TODO
-            });
-            const data_json = { products: Object.values(data.products)  };
-            console.log("Sending JSON:", data_json);
-
-            const response = await fetch('/order/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data_json)
-            });
-    
-            const result = await response.json();
-            console.log(result);
-            if (response.ok && result.new_order) {
-              window.location.href = url_for('page.shipping_form', id=result.new_order);
-            }
-            else if(result.errors) {
-              alert(result.errors.product.code + "\n" + result.errors.product.name)
-            }
-        });
-    </script>
 {% endblock %}

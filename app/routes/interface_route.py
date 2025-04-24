@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, request, g
+from flask import Blueprint, render_template, request, g, redirect, url_for
 
 from app.controllers.product_controller import ProductController
 from app.controllers.order_controller import OrderController
 import uuid
-from app.panier_helper import get_panier_redis, add_product_to_cart, set_panier_redis
+from app.helper.panier_helper import get_panier_redis, add_product_to_cart, set_panier_redis
 
 page = Blueprint('page', __name__, url_prefix='/page')
 
@@ -22,6 +22,19 @@ def get_panier():
     products = get_panier_redis()
     print(products)
     return render_template('panier.html', products=products)
+
+@page.route('/panier', methods=['POST'])
+def process_panier():
+    products = get_panier_redis()
+    dict_products: list = []
+    for product in products:
+        dict_products.append({"id": product.id, "quantity": product.quantity})
+    return_object, error_code = OrderController.process_order(dict_products)
+    print(error_code)
+    if error_code == 201 or error_code == 200:
+        return redirect(url_for('page.shipping_form',  id=return_object['order_id']))
+    else:
+        return render_template('panier.html', products=products)
 
 @page.route('/shipping_form/<int:id>', methods=['GET'])
 def shipping_form(id: int):
