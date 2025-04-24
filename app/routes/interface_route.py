@@ -1,10 +1,18 @@
 from flask import Blueprint, render_template, request, g, redirect, url_for
 
+import os
 from app.controllers.product_controller import ProductController
 from app.controllers.order_controller import OrderController
 import uuid
+from redis import Redis
+from rq import Queue
 from app.helper.panier_helper import get_panier_redis, add_product_to_cart, set_panier_redis
+DB_REDIS = os.getenv('REDIS')
+DB_REDIS_PORT = os.getenv('REDIS_PORT')
+redis_url = f"redis://{DB_REDIS}:{DB_REDIS_PORT}/0"
+redis = Redis.from_url(redis_url)
 
+queue = Queue(connection=redis)
 page = Blueprint('page', __name__, url_prefix='/page')
 
 @page.route('/products')
@@ -50,6 +58,14 @@ def confirmation(id: int):
     return_object, error_code = OrderController.get_order(id)
     products = [ProductController.get_product_by_id(product_id) for product_id in return_object.product_links]
     return render_template('confirmation.html', id=id, order=return_object, products=products), error_code
+
+@page.route('/process/<int:job_id>', methods=['GET'])
+def process(job_id: int):
+    job = queue.fetch_job(job_id)
+    if not job.is_finished:
+        return render_template('process.html'), 202
+    else:
+        return job.result
 
 @page.route('/panier/add', methods=['POST'])
 def add_to_panier():
