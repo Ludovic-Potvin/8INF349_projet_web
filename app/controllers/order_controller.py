@@ -137,7 +137,7 @@ class OrderController:
         if cached_order:
             print("GET IN REDIS")
             order = order_to_object(cached_order)
-            return order, 200
+            return order, 302
 
         app.logger.info("Entered get_order")
         print("Entered get_order")
@@ -427,8 +427,8 @@ def update_order_card_after(id, credit_card, total):
             app.logger.info("update_order_card did")
             error_code = 200
             return_object = order.to_dict()
-
-            #redis.set(order.id, json.dumps(return_object))
+            print("REDIS SET")
+            redis.set(order.id, json.dumps(return_object))
         finally:
             session.close()
     return return_object, error_code
@@ -444,6 +444,7 @@ def order_to_object(data):
             product_id=item['product_id'],
             quantity=item['quantity'],
         )
+        temp.product = ProductController.get_product_by_id(item['product_id'])
         order_products_informations.append(temp)
     credit_card_informations = CreditCard(
         name=credit_card_data.get('name'),
