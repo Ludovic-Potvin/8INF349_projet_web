@@ -31,6 +31,17 @@ redis = Redis.from_url(redis_url)
 
 queue = Queue(connection=redis)
 
+
+def this_is_a_test2(this_number):
+    for i in range(this_number):
+        print("asl")
+
+def this_is_a_test1(credit_card, total):
+    response = OrderController.make_payment(credit_card, total)
+    for i in range(1001):
+        print(response)
+    return "asd"
+
 def make_payment(credit_card_information, amount_charged):
     url = "https://dimensweb.uqac.ca/~jgnault/shops/pay/"
     payload = {
@@ -126,7 +137,7 @@ class OrderController:
         if cached_order:
             print("GET IN REDIS")
             order = order_to_object(cached_order)
-            return order, 200
+            return order, 302
 
         app.logger.info("Entered get_order")
         print("Entered get_order")
@@ -385,18 +396,10 @@ class OrderController:
 
 def update_order_card_after(id, credit_card, total):
     order, error_code = OrderController.get_order(id)
-    temp = make_payment(credit_card, int(total))
+    response = make_payment(credit_card, int(total))
 
-    if temp.status_code != 200:
-        return_object = {
-                "errors" : {
-                    "credit_card": {
-                        "code": "Carte invalide",
-                        "name": "La carte entrée n'est pas valide"
-                    }
-                }
-            }
-        return return_object, temp.status_code
+    if response.status_code != 200:
+        return response.json, response.status_code
     with Session() as session:
         try:
             if order.creditCard:
@@ -424,8 +427,8 @@ def update_order_card_after(id, credit_card, total):
             app.logger.info("update_order_card did")
             error_code = 200
             return_object = order.to_dict()
-
-            #redis.set(order.id, json.dumps(return_object))
+            print("REDIS SET")
+            redis.set(order.id, json.dumps(return_object))
         finally:
             session.close()
     return return_object, error_code
@@ -441,6 +444,7 @@ def order_to_object(data):
             product_id=item['product_id'],
             quantity=item['quantity'],
         )
+        temp.product = ProductController.get_product_by_id(item['product_id'])
         order_products_informations.append(temp)
     credit_card_informations = CreditCard(
         name=credit_card_data.get('name'),
