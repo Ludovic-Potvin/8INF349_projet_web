@@ -5,14 +5,14 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Set the working directory to /worker
-WORKDIR /worker
+WORKDIR /app
 
 COPY requirements.txt ./
 
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY worker/ .
+COPY . .
 
 # Run the worker (adjust as needed to run your worker script)
 CMD ["python", "worker.py"]
