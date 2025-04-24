@@ -1,4 +1,5 @@
 from time import process_time_ns
+from tkinter.font import names
 
 import app
 import os
@@ -135,17 +136,16 @@ class OrderController:
         #Check if the order is in redis
         cached_order = redis.get(order_id)
         if cached_order:
-            return cached_order
+            print("GET IN REDIS")
+            order = order_to_object(cached_order)
+            return order, 200
 
         app.logger.info("Entered get_order")
         print("Entered get_order")
         with Session() as session:
             try:
-                #I dont fucking know why now the first query work fuck off
                 order = session.query(Order).filter(Order.id == order_id).first()
                 print(order)
-
-
                 print(f"Paid: {order.paid}")
                 print(f"Shipping Info: {order.shipping_info}")
                 print(f"Card Info: {order.creditCard}")
@@ -165,6 +165,7 @@ class OrderController:
 
         #put the order in redis after it was fetched from postgesql
         if order.paid:
+            print("SET IN REDIS")
             redis.set(order_id, json.dumps(order.to_dict()))
 
         return order, error_code
@@ -442,3 +443,43 @@ class OrderController:
             finally:
                 session.close()
         return return_object, error_code
+
+def order_to_object(data):
+    order_data = json.loads(data)
+    shipping_data = order_data["shipping_info"]
+    credit_card_data = order_data["credit_card"]
+    products_data = order_data["products"]
+    order_products_informations = []
+    for item in products_data:
+        temp = OrderProduct(
+            product_id=item['product_id'],
+            quantity=item['quantity'],
+        )
+        order_products_informations.append(temp)
+    credit_card_informations = CreditCard(
+        name=credit_card_data.get('name'),
+        number=credit_card_data.get('number'),
+        expiration_year=credit_card_data.get('expiration_year'),
+        exp_month=credit_card_data.get('exp_month'),
+    )
+    shipping_informations = ShippingInformation(
+        id=shipping_data.get('id'),
+        country=shipping_data.get('country'),
+        address=shipping_data.get('address'),
+        postal_code=shipping_data.get('postal_code'),
+        city=shipping_data.get('city'),
+        province=shipping_data.get('province'),
+    )
+    order = Order(
+        email=order_data.get('email'),
+        total_price=order_data.get('total_price'),
+        id=order_data.get('id'),
+        total_price_tax=order_data.get('total_price_tax'),
+        transaction=order_data.get('transaction'),
+        paid=order_data.get('paid'),
+        shipping_price=order_data.get('shipping_price'),
+        product_links=order_products_informations,
+        shipping_info=shipping_informations,
+        creditCard=credit_card_informations,
+    )
+    return order
