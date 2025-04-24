@@ -38,7 +38,6 @@ def process_panier():
     for product in products:
         dict_products.append({"id": product.id, "quantity": product.quantity})
     return_object, error_code = OrderController.process_order(dict_products)
-    print(error_code)
     if error_code == 201 or error_code == 200:
         return redirect(url_for('page.shipping_form',  id=return_object['order_id']))
     else:
@@ -68,17 +67,21 @@ def confirmation(id: int):
         ]
         return render_template('confirmation.html', id=id, order=return_object, products=products), error_code
     else:
-        return render_template('error.html', errors=return_object, error_code=error_code)
+        return render_template('error.html', code=return_object['order']['code'],  code=return_object['order']['message'], error_code=error_code)
 
 @page.route('/process/<string:job_id>', methods=['GET'])
 def process(job_id: str):
     job = queue.fetch_job(job_id)
-    if job and not job.is_finished:
-        return render_template('processing.html'), 202
-    else:
-        unset_panier_redis()
-        result, error_code = job.return_value()
-        return redirect(url_for('page.confirmation',  id=result['id']))
+    if job:
+        if not job.is_finished:
+            return render_template('processing.html'), 202
+        else:
+            unset_panier_redis()
+            result, error_code = job.return_value()
+            if error_code == 200:
+                return redirect(url_for('page.confirmation',  id=result['id']))
+            else:
+                return render_template('error.html', code=result['credit_card']['code'],  code=result['credit_card']['message'], error_code=error_code)
 
 @page.route('/panier/add', methods=['POST'])
 def add_to_panier():
