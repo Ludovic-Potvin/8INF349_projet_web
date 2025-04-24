@@ -6,7 +6,7 @@ from app.controllers.order_controller import OrderController
 import uuid
 from redis import Redis
 from rq import Queue
-from app.helper.panier_helper import get_panier_redis, add_product_to_cart, set_panier_redis
+from app.helper.panier_helper import get_panier_redis, add_product_to_cart, set_panier_redis, unset_panier_redis
 DB_REDIS = os.getenv('REDIS')
 DB_REDIS_PORT = os.getenv('REDIS_PORT')
 redis_url = f"redis://{DB_REDIS}:{DB_REDIS_PORT}/0"
@@ -76,7 +76,7 @@ def process(job_id: str):
     if job and not job.is_finished:
         return render_template('processing.html'), 202
     else:
-        print(job.return_value())
+        unset_panier_redis()
         result, error_code = job.return_value()
         return redirect(url_for('page.confirmation',  id=result['id']))
 

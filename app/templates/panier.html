@@ -2,41 +2,50 @@
 {% block title %}Panier{% endblock %}
 {% block content %}
     <h2>Panier</h2>
-    <div class="container">
-        <div class="row text-info bg-dark">
-          <div class="col-8">
-            <h2>Produit</h2>
-          </div>
-          <div class="col-2">
-            <h2> Quantité</h2>
-          </div>
-          <div class="col-2">
-            <h2> Prix</h2>
-          </div>
-        </div>
-        <!-- to - do changes for multiple products-->
-        <form id="panierForm" method="post" action="/page/panier">
-          <input type="hidden" name="panier_id" value="{{ panier_id }}">
-        {% for product in products %}
-        <div class="row">
-            <div class="col-8">
-              {{ product.name }}
+    <form id="panierForm" method="post" action="/page/panier">
+    <input type="hidden" name="panier_id" value="{{ panier_id }}">
+      <div class="container">
+          <div class="row text-info bg-dark">
+            <div class="col-6">
+              <h4>Produit</h4>
             </div>
-            <div class="col-2">
-              {{ product.quantity }}
+            <div class="col-2 text-center">
+              <h4>Prix unitaire</h4>
             </div>
-            <div class="col-2">
-              {{ product.price }} $
+            <div class="col-2 text-center">
+              <h4> Quantité</h4>
             </div>
-          {% endfor %}
-        </div>
-        <hr/>
-        <div class="row">
-            <div class="col-10"></div>
-            <div class="col-2">
-              <button class="btn btn-primary" type="submit" id="process"> Paiement </button>
+            <div class="col-2 text-end">
+              <h4> Prix Total</h4>
             </div>
           </div>
+            {% for product in products %}
+            <div class="row mt-4">
+                <div class="col-6">
+                  {{ product.name }}
+                </div>
+                <div class="col-2 text-center">
+                  {{ product.price }}
+                </div>
+                <div class="col-2 text-center">
+                  {{ product.quantity }}
+                </div>
+                <div class="col-2 text-end">
+                  {% set total_product = product.price * product.quantity %}
+                  {{ total_product }} $
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="row">
+            <hr/>
+          </div>
+          <div class="row">
+              <div class="col-10"></div>
+              <div class="col-2">
+                <button class="btn btn-primary" type="submit" id="process"> Paiement </button>
+              </div>
+            </div>
         </form>
       </div>
     </div>
