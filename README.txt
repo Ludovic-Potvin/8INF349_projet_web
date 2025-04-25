@@ -3,13 +3,16 @@
 ## Setup Instructions
 
 ## Using Docker
-1. **Build the image**
+1. **Run the setup script**
+
+> **_NOTE:_**  Write that code in pycharm terminal (alt+f12)
+
 ```bash
-    docker build -t flask-app .
+    .\setup.bat
 ```
-2. **run the container**
+2. **run the app**
 ```bash
-    docker run -p 5000:5000 flask-app
+    docker-compose up
 ```
 
 ## Without Docker
