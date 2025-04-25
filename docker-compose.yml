@@ -26,6 +26,7 @@ services:
       DB_NAME: ${DB_NAME}
       REDIS: ${REDIS}
       REDIS_PORT: ${REDIS_PORT}
+      PAYMENT_URL: ${PAYMENT_URL}
     ports:
       - '5000:5000'
     links:
@@ -52,6 +53,7 @@ services:
       DB_NAME: ${DB_NAME}
       REDIS: ${REDIS}
       REDIS_PORT: ${REDIS_PORT}
+      PAYMENT_URL: ${PAYMENT_URL}
     command: python worker.py
 volumes:
   pgdata:

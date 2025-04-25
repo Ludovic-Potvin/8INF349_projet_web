@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, request, g, redirect, url_for
-
 import os
 from app.controllers.product_controller import ProductController
 from app.controllers.order_controller import OrderController
@@ -7,6 +6,8 @@ import uuid
 from redis import Redis
 from rq import Queue
 from app.helper.panier_helper import get_panier_redis, add_product_to_cart, set_panier_redis, unset_panier_redis
+
+
 DB_REDIS = os.getenv('REDIS')
 DB_REDIS_PORT = os.getenv('REDIS_PORT')
 redis_url = f"redis://{DB_REDIS}:{DB_REDIS_PORT}/0"
@@ -54,7 +55,8 @@ def paiement_form(id: int):
 
 @page.route('/confirmation/<int:id>', methods=['GET'])
 def confirmation(id: int):
-    return_object, error_code = OrderController.get_order(id) 
+    return_object, error_code = OrderController.get_order(id)
+    print(error_code)
     if error_code == 302:
         products = [
             {

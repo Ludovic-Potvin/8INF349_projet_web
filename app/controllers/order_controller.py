@@ -1,12 +1,7 @@
-from time import process_time_ns
-
-import app
 import os
-import re
 from app.controllers.product_controller import ProductController
-from flask import abort
 from app.database import Session
-from flask import abort, url_for, jsonify
+from flask import abort, url_for
 import json
 import requests
 import app
@@ -15,13 +10,9 @@ from app.models.order_product import OrderProduct
 from app.models.shipping_information import ShippingInformation
 from app.models.credit_card import CreditCard
 from redis import Redis
-from rq import Queue, Worker
-from sqlalchemy import text
 from rq import Queue
-from redis import Redis
-import requests
 
-
+from app.utils.order_utils import *
 
 DB_REDIS = os.getenv('REDIS')
 DB_REDIS_PORT = os.getenv('REDIS_PORT')
@@ -30,15 +21,6 @@ redis_url = f"redis://{DB_REDIS}:{DB_REDIS_PORT}/0"
 redis = Redis.from_url(redis_url)
 
 queue = Queue(connection=redis)
-
-def make_payment(credit_card_information, amount_charged):
-    url = "https://dimensweb.uqac.ca/~jgnault/shops/pay/"
-    payload = {
-        "credit_card": credit_card_information,
-        "amount_charged": amount_charged
-    }
-    response = requests.post(url, json=payload)
-    return response
 
 class OrderController:
     @classmethod
@@ -126,7 +108,7 @@ class OrderController:
         if cached_order:
             print("GET IN REDIS")
             order = order_to_object(cached_order)
-            return order, 200
+            return order, 302
 
         app.logger.info("Entered get_order")
         print("Entered get_order")
@@ -310,10 +292,13 @@ class OrderController:
                 finally:
                     session.close()
         return return_object, error_code
-    
-    #Description: Only update the credit card info
+
+
     @classmethod
     def update_order_card_before(self, id, data):
+        """
+        Description: Only update the credit card info
+        """
         order, error_code = self.get_order(id)
 
        #If the order is not in the cache, it is not paid...
@@ -376,6 +361,7 @@ class OrderController:
 
         return self.verify_payment(job.id)
 
+
     @classmethod
     def verify_payment(self, job_id):
         error_code = 202
@@ -424,48 +410,8 @@ def update_order_card_after(id, credit_card, total):
             app.logger.info("update_order_card did")
             error_code = 200
             return_object = order.to_dict()
-
-            #redis.set(order.id, json.dumps(return_object))
+            print("SET IN REDIS")
+            redis.set(order.id, json.dumps(return_object))
         finally:
             session.close()
     return return_object, error_code
-
-def order_to_object(data):
-    order_data = json.loads(data)
-    shipping_data = order_data["shipping_info"]
-    credit_card_data = order_data["credit_card"]
-    products_data = order_data["products"]
-    order_products_informations = []
-    for item in products_data:
-        temp = OrderProduct(
-            product_id=item['product_id'],
-            quantity=item['quantity'],
-        )
-        order_products_informations.append(temp)
-    credit_card_informations = CreditCard(
-        name=credit_card_data.get('name'),
-        number=credit_card_data.get('number'),
-        expiration_year=credit_card_data.get('expiration_year'),
-        exp_month=credit_card_data.get('exp_month'),
-    )
-    shipping_informations = ShippingInformation(
-        id=shipping_data.get('id'),
-        country=shipping_data.get('country'),
-        address=shipping_data.get('address'),
-        postal_code=shipping_data.get('postal_code'),
-        city=shipping_data.get('city'),
-        province=shipping_data.get('province'),
-    )
-    order = Order(
-        email=order_data.get('email'),
-        total_price=order_data.get('total_price'),
-        id=order_data.get('id'),
-        total_price_tax=order_data.get('total_price_tax'),
-        transaction=order_data.get('transaction'),
-        paid=order_data.get('paid'),
-        shipping_price=order_data.get('shipping_price'),
-        product_links=order_products_informations,
-        shipping_info=shipping_informations,
-        creditCard=credit_card_informations,
-    )
-    return order
