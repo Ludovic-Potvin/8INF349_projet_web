@@ -42,3 +42,7 @@ def add_product_to_cart(product_id, quantity):
 
     print(f"Added {quantity} of {product_id} to cart {panier_id}")
     return True
+
+def unset_panier_redis():
+    panier_id = g.cart_id
+    redis.delete(f"panier:{panier_id}")

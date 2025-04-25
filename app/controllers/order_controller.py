@@ -1,10 +1,7 @@
-import app
 import os
-import re
 from app.controllers.product_controller import ProductController
-from flask import abort
 from app.database import Session
-from flask import abort, url_for, jsonify
+from flask import abort, url_for
 import json
 import requests
 import app
@@ -13,7 +10,9 @@ from app.models.order_product import OrderProduct
 from app.models.shipping_information import ShippingInformation
 from app.models.credit_card import CreditCard
 from redis import Redis
-from rq import Queue, Worker
+from rq import Queue
+
+from app.utils.order_utils import *
 
 DB_REDIS = os.getenv('REDIS')
 DB_REDIS_PORT = os.getenv('REDIS_PORT')
@@ -24,24 +23,6 @@ redis = Redis.from_url(redis_url)
 queue = Queue(connection=redis)
 
 class OrderController:
-    @classmethod
-    def verify_payment(cls, order_id):
-        payment_job = queue.fetch_job(order_id)
-        if payment_job.is_finished:
-            return payment_job.return_value #TODO change return param depending on the logic
-
-        return f"Le payment de la commande {order_id} n'est pas fini" #TODO change return param depending on the logic
-
-    @classmethod
-    def make_payment(cls, credit_card_information, amount_charged):
-        url = "https://dimensweb.uqac.ca/~jgnault/shops/pay/"
-        payload = {
-            "credit_card": credit_card_information,
-            "amount_charged": amount_charged
-        }
-        response = requests.post(url, json=payload)
-        return response
-
     @classmethod
     def process_order(cls, products):
         app.logger.info("Entered process_order")
@@ -125,13 +106,16 @@ class OrderController:
         #Check if the order is in redis
         cached_order = redis.get(order_id)
         if cached_order:
-            return cached_order
+            print("GET IN REDIS")
+            order = order_to_object(cached_order)
+            return order, 302
 
         app.logger.info("Entered get_order")
         print("Entered get_order")
         with Session() as session:
             try:
                 order = session.query(Order).filter(Order.id == order_id).first()
+
                 print(f"Paid: {order.paid}")
                 print(f"Shipping Info: {order.shipping_info}")
                 print(f"Card Info: {order.creditCard}")
@@ -149,7 +133,9 @@ class OrderController:
             finally:
                 session.close()
 
-        #put the order in redis after it was fetched from postgesql
+        if order.paid:
+            print("SET IN REDIS")
+            redis.set(order_id, json.dumps(order.to_dict()))
         return order, error_code
     
     @classmethod
@@ -220,7 +206,7 @@ class OrderController:
         if 'order' in data:
             return self.update_order_shipping(id, data)
         elif 'credit_card' in data:
-            return self.update_order_card(id, data)
+            return self.update_order_card_before(id, data)
         else:
             return abort(418, {"error": "tea - how did you end up here"})
 
@@ -240,7 +226,6 @@ class OrderController:
                     }
                 }
             }
-        
         email = order_data.get('email')
         shipping_data = order_data.get('shipping_information')
         if shipping_data is None or  email is None:
@@ -257,7 +242,6 @@ class OrderController:
 
         required_fields = ['country', 'address', 'postal_code', 'city', 'province']
         missing_fields = [field for field in required_fields if not shipping_data.get(field)]
-
         if missing_fields:
             print("missing-fields")
             error_code = 422
@@ -280,7 +264,6 @@ class OrderController:
             }
             with Session() as session:
                 try:
-                    order.email = email
                     order.total_price_tax = tax[shipping_data.get("province")]
                     if order.shipping_info:
                         order.shipping_info.country = shipping_data.get("country")
@@ -308,16 +291,30 @@ class OrderController:
                     abort(500, "An unexpected server error happened")
                 finally:
                     session.close()
-        print(error_code)
         return return_object, error_code
-    
-    #Description: Only update the credit card info
+
+
     @classmethod
-    def update_order_card(self, id, data):
+    def update_order_card_before(self, id, data):
+        """
+        Description: Only update the credit card info
+        """
         order, error_code = self.get_order(id)
 
-        #TODO ajouter la logique si la commande est en train de se faire payer...
-        #TODO voir la fonction "verify_payment"
+       #If the order is not in the cache, it is not paid...
+        cached_order = redis.get(id)
+        if cached_order:
+            error_code = 409
+            return_object = {
+                "errors": {
+                    "order": {
+                        "code": "processing",
+                        "name": "La transaction est déjà en cours de paiement"
+                        }
+                    }
+                }
+            return return_object, error_code
+
         credit_card = data.get('credit_card')
         if not credit_card:
             app.logger.info("missing card")
@@ -330,6 +327,7 @@ class OrderController:
                         }
                     }
                 }
+            return return_object, error_code
         required_fields = ['name', 'number', 'expiration_year', 'cvv', 'expiration_month']
         missing_fields = [field for field in required_fields if not credit_card.get(field)]
         if missing_fields:
@@ -343,7 +341,8 @@ class OrderController:
                         }
                     }
                 }
-        if order.paid is True:
+            return return_object, error_code
+        if order.paid:
             app.logger.info("already paid")
             error_code = 422
             return_object = {
@@ -354,58 +353,65 @@ class OrderController:
                     }
                 }
             }
-        print(error_code)
-        if(error_code == 302):
-            total = order.total_price_tax + order.shipping_price
-            response = self.make_payment(credit_card, total)
-            #TODO the make_payment should be done in the background
-            #TODO There should be a logic depending if the job is done or not see ""
-            #TODO Just right here, we should call the make payment method
-            #TODO after, the background job should call either the save card information or return the error<
-            #TODO if payment not done yet = return 202
-            #TODO if payment ok = save payment info
-            #TODO if payment fail = do not save payment info and we should tell the user but how I don't know
-            #TODO maybe the solution would be to put the failed payment attempt in a cache with a specific id(fp<order_id>)
-            # and before we get the product we check if the failed specific order is present and return the error message
+            return return_object, error_code
+
+        total = order.total_price_tax + order.shipping_price
+        job = queue.enqueue(update_order_card_after, id, credit_card, total)
 
 
-
-            response = self.make_payment(credit_card, int(total))
-            print(response)
-
-            if response.status_code != 200:
-                return response.json, response.status_code
-            with Session() as session:
-                try:
-                    if order.creditCard:
-                        order.creditCard.name = credit_card.get("name")
-                        order.creditCard.number = credit_card.get("number").replace(" ", "")[:12]
-                        order.creditCard.expiration_year = credit_card.get("expiration_year")
-                        order.creditCard.cvv = credit_card.get("cvv")
-                        order.creditCard.exp_month = credit_card.get("exp_month")
-                    else:
-                        # If the credit card doesn't exist, create a new one
-                        credit_card = CreditCard(
-                            name=credit_card['name'],
-                            number=credit_card['number'].replace(" ", "")[:12],
-                            expiration_year=credit_card['expiration_year'],
-                            cvv=credit_card['cvv'],
-                            exp_month=credit_card['expiration_month'],
-                            order_id=order.id
-                        )
-                        session.add(credit_card)
+        return self.verify_payment(job.id)
 
 
-                    order.paid = True
-                    session.add(instance=order)
-                    session.commit()
-                    app.logger.info("update_order_card did")
-                    error_code = 200
-                    return_object = order.to_dict()
-
-                    redis.set(order.id, return_object)
-                finally:
-                    session.close()
+    @classmethod
+    def verify_payment(self, job_id):
+        error_code = 202
+        return_object = {"location": url_for('page.process', job_id=job_id)}
         return return_object, error_code
 
 
+def update_order_card_after(id, credit_card, total):
+    order, error_code = OrderController.get_order(id)
+    temp = make_payment(credit_card, int(total))
+
+    if temp.status_code != 200:
+        return_object = {
+                "errors" : {
+                    "credit_card": {
+                        "code": "Carte invalide",
+                        "name": "La carte entrée n'est pas valide"
+                    }
+                }
+            }
+        return return_object, temp.status_code
+    with Session() as session:
+        try:
+            if order.creditCard:
+                order.creditCard.name = credit_card.get("name")
+                order.creditCard.number = credit_card.get("number").replace(" ", "")[:12]
+                order.creditCard.expiration_year = credit_card.get("expiration_year")
+                order.creditCard.cvv = credit_card.get("cvv")
+                order.creditCard.exp_month = credit_card.get("exp_month")
+            else:
+                # If the credit card doesn't exist, create a new one
+                credit_card = CreditCard(
+                    name=credit_card['name'],
+                    number=credit_card['number'].replace(" ", "")[:12],
+                    expiration_year=credit_card['expiration_year'],
+                    cvv=credit_card['cvv'],
+                    exp_month=credit_card['expiration_month'],
+                    order_id=order.id
+                )
+                session.add(credit_card)
+
+
+            order.paid = True
+            session.add(instance=order)
+            session.commit()
+            app.logger.info("update_order_card did")
+            error_code = 200
+            return_object = order.to_dict()
+            print("SET IN REDIS")
+            redis.set(order.id, json.dumps(return_object))
+        finally:
+            session.close()
+    return return_object, error_code

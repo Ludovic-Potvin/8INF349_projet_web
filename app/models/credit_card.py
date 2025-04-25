@@ -16,13 +16,21 @@ class CreditCard(Base):
     order_id = Column(Integer, ForeignKey('orders.id'), unique=True)
 
     def __repr__(self):
-        return f'<CreditCard {self.name}>'
+        return f'<CreditCard {self.name}, {self.number}>'
     
     def to_dict(self):
         return {
             "name": self.name,
             "first_digits" : self.number[:4],
             "last_digits": self.number[-4:],
+            "expiration_year": self.expiration_year,
+            "exp_month": self.exp_month,
+        }
+
+    def to_dict_full(self):
+        return {
+            "name": self.name,
+            "number": self.number,
             "expiration_year": self.expiration_year,
             "exp_month": self.exp_month,
         }

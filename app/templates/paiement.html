@@ -96,7 +96,7 @@
           alert(result.errors.order.code + "\n" + result.errors.order.name)
         }
         else if (response.ok) {
-            window.location.href = "/page/confirmation/{{ id }}";
+            window.location.href = result.location;
         }
     });
 </script>

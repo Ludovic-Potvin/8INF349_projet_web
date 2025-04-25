@@ -1,7 +1,10 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, JSON
 from sqlalchemy.orm import relationship, validates
-
 from app.models.base import Base
+from app.models.credit_card import CreditCard
+from app.models.shipping_information import ShippingInformation
+from app.models.order_product import OrderProduct
+
 
 
 class Order(Base):
@@ -21,13 +24,15 @@ class Order(Base):
 
 
     def __repr__(self):
-        return f'<Order {self.email}>'
+        return (f'<Email: {self.email},ID:{self.id},TRANSAC{self.transaction},'
+                f'TOTAL PRICE{self.total_price},TOTALPRICETAX{self.total_price_tax},'
+                f'PAID:{self.paid},SHIPPINGPRICE{self.shipping_price}>')
     
     def to_dict(self):
         return {
             'email': self.email,
             'shipping_info': self.shipping_info.to_dict() if self.shipping_info else {},
-            'credit_card': self.creditCard.to_dict() if self.creditCard else {},
+            'credit_card': self.creditCard.to_dict_full() if self.creditCard else {},
             'total_price': self.total_price,
             'total_price_tax': self.total_price_tax,
             'transaction': self.transaction,
