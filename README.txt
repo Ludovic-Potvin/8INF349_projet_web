@@ -8,7 +8,7 @@
 > **_NOTE:_**  Write that code in pycharm terminal (alt+f12)
 
 ```bash
-    .\setup.bat
+    .\setup_env.bat
 ```
 2. **run the app**
 ```bash
